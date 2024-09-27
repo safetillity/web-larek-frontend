@@ -1,4 +1,4 @@
-import { IProduct, IApiModel , IOrderData, IOrderResult } from '../../types/index.ts';
+import { IProduct , IOrderData, IOrderResult } from '../../types/index.ts';
 import { Api , ApiListResponse} from '../base/api';
 
 

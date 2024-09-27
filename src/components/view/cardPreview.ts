@@ -10,7 +10,5 @@ export class CardPreview extends Card implements ICardPreview {
    this.button = this._element.querySelector('.card__button');
    this.description = this._element.querySelector('.card__text');
   }
-  render(data: IProduct): HTMLElement {
-   
-  }
+  render(data: IProduct): HTMLElement {}
 }

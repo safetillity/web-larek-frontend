@@ -1,10 +1,12 @@
 import { IModal } from '../../types/index.ts';
 import { IEvents } from '../base/events.ts';
-export class Modal implements IModal {
+import { Component } from '../base/component.ts';
+export class Modal extends Component<IModal> {
 	protected _closeButton: HTMLButtonElement;
 	content: HTMLElement;
 
-	constructor(protected modalContainer: HTMLElement) {
+	constructor( modalContainer: HTMLElement , container : HTMLElement, protected events: IEvents) {
+		super(container)
 		this._closeButton = modalContainer.querySelector(
 			'.modal__close'
 		) as HTMLButtonElement;

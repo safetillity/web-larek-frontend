@@ -1,10 +1,3 @@
-export interface IApiModel {
-	cdn: string;
-	items: IProduct[];
-	getListProductCard: () => Promise<IProduct[]>;
-	postOrderLot: (data: IOrderData) => Promise<IOrderResult>;
-}
-
 export interface IOrderData {
 	payment: string;
 	email: string;
@@ -93,7 +86,7 @@ export interface IOrderForm {
 	form: HTMLFormElement;
 	choiceButtons: HTMLButtonElement[];
 	paymentSelection: string;
-	formErrors: HTMLElement;
+	validationErrors: HTMLElement;
 	render(): HTMLElement;
 }
 
