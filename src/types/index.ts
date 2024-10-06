@@ -7,6 +7,21 @@ export interface IOrderData {
 	items: string[];
 }
 
+export interface IAppData {
+	catalog: ICard[];
+	order: IOrderData;
+	basketModel: IBasketModel;
+
+	setButtonStatus(item: ICard): boolean;
+	setCatalog(items: ICard[]): void;	
+	setOrder(address: string): string;
+	validateOrder(address: string): boolean;
+	setOrderContacts(contact: number | string): number | string;
+	validateOrderContacts(contact: number | string): boolean;
+	setPaymentSelection(payment: string): string;
+	validatePaymentSelection(payment: string): boolean;
+	clearOrderData(): void;
+}
 export interface IOrderResult {
 	id: string;
 	total: number;
@@ -20,26 +35,16 @@ export interface IBasketModel {
 	clearOrders(basketList: IProduct[]): void;
 }
 
-export interface IFormModel {
-	payment: string;
-	email: string;
-	phone: string;
-	address: string;
-	total: number;
-	items: string[];
-	validationErrors: object;
-
-	setOrder(address: string): string;
-	validateOrder(address: string): boolean;
-	setOrderContact(contact: number | string): number | string;
-	validateOrderContact(contact: number | string): boolean;
-	setPaymentSelection(payment: string): string;
-	validatePaymentSelection(payment: string): boolean;
+export interface IBaseForm {
+	form: HTMLFormElement;
+	validationErrors: HTMLElement;
+	submitButton: HTMLButtonElement;
+	inputs: HTMLInputElement[] | HTMLInputElement;
+	render(): HTMLElement;
+	valid: boolean;
 }
 
-export interface IOrder extends IOrderForm {
-	items: string[];
-}
+
 
 export type validationErrors = Partial<Record<keyof IOrder, string>>;
 
@@ -82,21 +87,26 @@ export interface ICard {
 	render(data: IProduct): HTMLElement;
 }
 
-export interface IOrderForm {
+export interface IForm {
 	form: HTMLFormElement;
+	validationErrors: HTMLElement;
+	sumbitButton: HTMLButtonElement;
+	inputs: HTMLInputElement | HTMLInputElement[];
+	render(): HTMLElement;
+}
+export interface IOrderForm extends IForm {
 	choiceButtons: HTMLButtonElement[];
 	paymentSelection: string;
-	validationErrors: HTMLElement;
 	render(): HTMLElement;
 }
 
-export interface IContactsForm {
-	form: HTMLFormElement;
-	inputs: HTMLInputElement[];
-	submitButton: HTMLButtonElement;
-	formErrors: HTMLElement;
-	render(): HTMLElement;
+
+
+export interface IOrder extends IOrderForm {
+	items: string[];
 }
+
+
 
 export interface ISuccess {
 	success: HTMLElement;

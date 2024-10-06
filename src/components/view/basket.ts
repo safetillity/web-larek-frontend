@@ -2,8 +2,7 @@ import { IProduct, IBasket } from '../../types/index.ts';
 import { Component } from '../base/component.ts';
 import { IEvents } from '../base/events';
 
-export class Basket  extends Component<IBasket> {
-	sum: number;
+export class Basket extends Component<IBasket> {
 	button: HTMLButtonElement;
 	basket: HTMLElement;
 	basketPrice: HTMLElement;
@@ -12,8 +11,12 @@ export class Basket  extends Component<IBasket> {
 	title: HTMLElement;
 	basketButton: HTMLElement;
 
-	constructor(container : HTMLElement, template: HTMLTemplateElement, protected events: IEvents) {
-		super(container)
+	constructor(
+		container: HTMLElement,
+		template: HTMLTemplateElement,
+		protected events: IEvents
+	) {
+		super(container);
 		this.basket = template.content
 			.querySelector('.basket')
 			.cloneNode(true) as HTMLElement;

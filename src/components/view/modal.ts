@@ -5,8 +5,12 @@ export class Modal extends Component<IModal> {
 	protected _closeButton: HTMLButtonElement;
 	content: HTMLElement;
 
-	constructor( modalContainer: HTMLElement , container : HTMLElement, protected events: IEvents) {
-		super(container)
+	constructor(
+		modalContainer: HTMLElement,
+		container: HTMLElement,
+		protected events: IEvents
+	) {
+		super(container);
 		this._closeButton = modalContainer.querySelector(
 			'.modal__close'
 		) as HTMLButtonElement;
@@ -16,10 +20,7 @@ export class Modal extends Component<IModal> {
 		this._closeButton.addEventListener('click', this.close.bind(this));
 	}
 
-	close(): void {
-	
-	}
+	close(): void {}
 
-	open(): void {
-	}
+	open(): void {}
 }

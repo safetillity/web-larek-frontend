@@ -2,7 +2,8 @@ import { IBasketModel, IProduct } from '../../types/index.ts';
 import { IEvents } from '../base/events.ts';
 
 export class BasketModel implements IBasketModel {
-	protected _basketList: IProduct[];
+	protected basketList: IProduct[];
+	protected sum = 0;
 	constructor() {
 		this.basketList = [];
 	}

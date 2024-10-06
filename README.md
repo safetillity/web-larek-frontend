@@ -41,7 +41,7 @@ yarn build
 
 - Model : Отвечает за управление данными, бизнес-логикой и правилами приложения .
 - View : Отображает данные пользователю и отправляет команды пользователю в Presenter. В эту зону ответсвенности входит Отрисовка и обновление UI .
-- Presenter : Связывает Model и View, обрабатывая данные и обновляя представление. В роли Presenter выступает EventEmitter. Процессы приложения реализованы через обработку событий. Компоненты, такие как Modal и Component, используют события для взаимодействия с пользователем, что позволяет динамически обновлять интерфейс.
+- Presenter : Связывает Model и View, обрабатывая данные и обновляя представление. В роли Presenter выступает Component. Процессы приложения реализованы через обработку событий. Компоненты, используют события для взаимодействия с пользователем, что позволяет динамически обновлять интерфейс.
 
 ## Взаимодействие частей
 
@@ -51,6 +51,8 @@ yarn build
 4.Presenter обновляет View.
 
 ## Основные классы
+
+## Слой Model
 
 ### 1. Класс Api
 
@@ -113,6 +115,59 @@ constructor(cdn: string, baseUrl: string, options?: RequestInit)
 - `getListProductCard(): Promise<IProduct[]>` — получает список карточек продуктов.
 - `postOrderLot(data: IOrderData): Promise<IOrderResult>` — отправляет заказ на сервер.
 
+# Класс `appData`
+
+Класс `appData` реализует интерфейс `IAppData` и управляет данными приложения, такими как каталог товаров и информация о заказе.
+
+## Поля
+
+- **`catalog: ICard[]`** — Массив товаров каталога. По умолчанию это пустой массив.
+- **`order: IOrderData`** — Объект с информацией о заказе, содержащий следующие поля:
+  - **`payment: string`** — Метод оплаты. По умолчанию это пустая строка.
+  - **`email: string`** — Email пользователя.
+  - **`phone: string`** — Телефон пользователя.
+  - **`address: string`** — Адрес доставки.
+- **`basketModel: IBasketModel`** — Модель корзины для управления данными корзины.
+
+## Методы
+
+### `setButtonStatus(item: ICard): boolean`
+
+Устанавливает статус кнопки для товара в зависимости от условий.
+
+### `setCatalog(items: ICard[]): void`
+
+Устанавливает каталог товаров.
+
+### `setAddress(address: string): string`
+
+Устанавливает адрес доставки для заказа.
+
+### `validateOrder(address: string): boolean`
+
+Проверяет валидность адреса доставки.
+
+### `setOrderContacts(contact: number | string): number | string`
+
+Устанавливает контактные данные пользователя (номер телефона или email).
+актные данные.
+
+### `validateOrderContacts(contact: number | string): boolean`
+
+Проверяет валидность контактных данных (телефон или email).
+
+### `setPaymentSelection(payment: string): string`
+
+Устанавливает метод оплаты для заказа.
+
+### `validatePaymentSelection(payment: string): boolean`
+
+Проверяет валидность метода оплаты.
+
+### `clearOrderData(): void`
+
+Очищает данные заказа, сбрасывая все поля до значений по умолчанию.
+
 ### 3. Класс BasketModel
 
 Класс **BasketModel** управляет корзиной пользователя и реализует интерфейс `IBasketModel`.
@@ -125,11 +180,11 @@ constructor();
 
 #### Тело конструктора:
 
-- Инициализирует поле `_basketList`, которое представляет список продуктов в корзине, как пустой массив `[]`.
+- Инициализирует поле basketList, которое представляет список продуктов в корзине, как пустой массив `[]`.
 
 #### Поля:
 
-- `_basketList: IProduct[]` — список продуктов в корзине.
+- `basketList: IProduct[]` — список продуктов в корзине.
 
 #### Методы:
 
@@ -137,52 +192,9 @@ constructor();
 - `countSum(): number` — возвращает общую сумму товаров.
 - `setOrder(order: IProduct): void` — добавляет продукт в корзину.
 - `deleteOrder(order: IProduct): void` — удаляет продукт из корзины.
-- `clearOrders(basketList: IProduct[]): void` — очищает корзину.
+- `clearOrders(basketList: IProduct[]): void` — очищает корзину , т.е. удаляет все товары, которые в basketList . В параметр метода вводится список товаров в корзине на момент вызова , и массиву товаров присваивается пустой массив.
 
-### 4. Класс FormModel
-
-Класс **FormModel** отвечает за обработку и валидацию данных формы заказа и реализует интерфейс `IFormModel`.
-
-#### Конструктор:
-
-```ts
-constructor(events: IEvents)
-```
-
-#### Тело конструктора:
-
-- Инициализирует поля:
-  - `payment: string` — строка для хранения метода оплаты, по умолчанию пустая строка.
-  - `email: string` — строка для хранения электронной почты.
-  - `phone: string` — строка для хранения номера телефона.
-  - `address: string` — строка для хранения адреса доставки.
-  - `total: number` — общая сумма заказа, по умолчанию 0.
-  - `items: string[]` — массив товаров в заказе, по умолчанию пустой массив.
-  - `validationErrors: validationErrors` — объект для хранения ошибок валидации, по умолчанию пустой объект.
-- Сохраняет объект событий в поле `events`.
-
-#### Параметры:
-
-- `events: IEvents` — объект для работы с событиями.
-
-#### Поля:
-
-- `payment: string` — способ оплаты.
-- `email: string` — email пользователя.
-- `phone: string` — телефон пользователя.
-- `address: string` — адрес доставки.
-- `total: number` — итоговая сумма заказа.
-- `items: string[]` — список заказанных товаров.
-- `validationErrors: validationErrors` — ошибки валидации.
-
-#### Методы:
-
-- `setOrder(address: string): string` — устанавливает адрес доставки.
-- `validateOrder(address: string): boolean` — валидирует адрес доставки.
-- `setPaymentSelection(payment: string): string` — устанавливает способ оплаты.
-- `validatePaymentSelection(payment: string): boolean` — валидирует способ оплаты.
-
-### 5. Класс EventEmitter
+### 4. Класс EventEmitter
 
 Класс **EventEmitter** реализует систему событий и подписок. Реализует интерфейс `IEvents`.
 
@@ -194,11 +206,11 @@ constructor();
 
 #### Тело конструктора:
 
-- Инициализирует поле `_events`, которое является `Map<EventName, Set<Subscriber>>`. Эта карта хранит события и их подписчиков. Изначально это пустая карта.
+- Инициализирует поле events, которое является `Map<EventName, Set<Subscriber>>`. Эта карта хранит события и их подписчиков. Изначально это пустая карта.
 
 #### Поля:
 
-- `_events: Map<EventName, Set<Subscriber>>` — карта событий и подписчиков.
+- `events: Map<EventName, Set<Subscriber>>` — карта событий и подписчиков.
 
 #### Методы:
 
@@ -207,7 +219,35 @@ constructor();
 - `emit<T>(eventName: string, data?: T): void` — инициирует событие.
 - `trigger<T>(event: string, context?: Partial<T>): (data: T) => void` — создает триггер для событий.
 
-### 6. Класс Basket
+## Слой Presenter
+
+### 5. Класс Component
+
+Класс **Component** управляет отображением и состоянием элементов интерфейса, а также предоставляет методы для работы с HTML-элементами. Класс абстрактный и предназначен для расширения другими компонентами
+
+#### Конструктор:
+
+```ts
+protected constructor(protected readonly container: HTMLElement)
+```
+
+#### Параметры:
+
+- `template: HTMLTemplateElement` — элемент , с которым необходимы преобразования.
+
+#### Методы:
+
+- `toggleClass(element: HTMLElement, className: string, state: boolean)` — добавляет или удаляет CSS-класс элемента в зависимости от значения state.
+- `setText(element: HTMLElement, value: string)` — устанавливает текстовое содержимое элемента.
+- `setDisabled(element: HTMLElement, state: boolean)` — включает или отключает элемент в зависимости от состояния.
+- `setHidden(element: HTMLElement)` — скрывает элемент.
+- `setVisible(element: HTMLElement)` — делает элемент видимым.
+- `setImage(element: HTMLImageElement, src: string, alt?: string)` — задает изображение и альтернативный текст для HTML-элемента img.
+- `render(data?: Partial<T>): HTMLElement` — рендерит компонент на основе переданных данных.
+
+### Слой View
+
+### 4. Класс Basket
 
 Класс **Basket** отображает корзину на странице и расширяет класс `Component<IBasket>`.
 
@@ -231,22 +271,21 @@ constructor(container: HTMLElement, template: HTMLTemplateElement, events: IEven
 
 #### Поля:
 
-- `sum: number` — общая сумма товаров.
 - `button: HTMLButtonElement` — кнопка оформления заказа.
 - `basket: HTMLElement` — контейнер корзины.
 - `basketPrice: HTMLElement` — отображение цены товаров в корзине.
 - `basketList: HTMLElement` — список товаров в корзине.
-- `basketCounter: HTMLElement` — счетчик товаров в корзине.
+- `basketCounter: HTMLElement` — счетчик товаров в корзине
 - `title: HTMLElement` — заголовок корзины.
-- `basketButton: HTMLElement` — кнопка открытия корзины.
+- `basketButton: HTMLElement` — иконка корзины на главной странице.
 
 #### Методы:
 
 - `render(): void` — отрисовывает корзину.
 - `renderSum(sum: number): void` — отображает общую сумму товаров.
-- `renderBasketCounter(value: number): void` — обновляет счетчик товаров.
+- `renderBasketCounter(value: number): void` — обновляет счетчик товаров , взаимодействуя с элементом header\_\_basket-counter ,а именно с счетчиком корзины на главной странице
 
-### 7. Класс Card
+### 5. Класс Card
 
 Класс **Card** отображает карточку продукта и реализует интерфейс `ICard`.
 
@@ -259,26 +298,26 @@ constructor(template: HTMLTemplateElement, events: IEvents)
 #### Тело конструктора:
 
 - Инициализирует элементы разметки карточки, такие как:
-  - `_element` — основной контейнер карточки продукта.
-  - `_category` — категория товара.
-  - `_title` — название товара.
-  - `_image` — изображение товара.
-  - `_price` — цена товара.
+  - `element` — основной контейнер карточки продукта.
+  - `category` — категория товара.
+  - `title` — название товара.
+  - `image` — изображение товара.
+  - `price` — цена товара.
 
 #### Поля:
 
-- `_element: HTMLElement` — контейнер карточки.
-- `_id: HTMLElement` — элемент с ID продукта.
-- `_title: HTMLElement` — заголовок продукта.
-- `_image: HTMLElement` — изображение продукта.
-- `_categoty: HTMLElement` — категория продукта.
-- `_price: HTMLElement` — цена продукта.
+- `element: HTMLElement` — контейнер карточки.
+- `id: HTMLElement` — элемент с ID продукта.
+- `title: HTMLElement` — заголовок продукта.
+- `image: HTMLElement` — изображение продукта.
+- `categoty: HTMLElement` — категория продукта.
+- `price: HTMLElement` — цена продукта.
 
 #### Методы:
 
 - `render(data: IProduct): HTMLElement` — отрисовывает карточку продукта.
 
-### 8. Класс CardPreview
+### 6. Класс CardPreview
 
 Класс **CardPreview** наследуется от `Card` и добавляет описание и кнопку к карточке продукта.
 
@@ -304,34 +343,90 @@ constructor(template: HTMLTemplateElement, events: IEvents)
 
 - `render(data: IProduct): HTMLElement` — отрисовывает карточку с описанием.
 
-### 9. Класс ContactsForm
+### 7. Класс `BaseForm`
 
-Класс **ContactsForm** отвечает за отображение и валидацию контактных данных пользователя.
+Класс `BaseForm` реализует интерфейс `IBaseForm` и реализует базовую форму с полями ввода, кнопкой отправки и отображением ошибок валидации.
 
-#### Конструктор:
+## Конструктор
 
-```ts
-constructor(template: HTMLTemplateElement, events: IEvents)
-```
+constructor(template: HTMLTemplateElement, events: IEvents);
 
-#### Тело конструктора:
+### Тело конструктора
 
-- Инициализирует элементы формы:
-  - `form` — основной элемент формы.
-  - `inputs` — массив полей ввода.
-  - `submitButton` — кнопка отправки формы.
-  - `validationErrors` — контейнер для отображения ошибок валидации.
+Инициализирует элементы формы на основе переданного шаблона `template`:
 
-#### Поля:
+- **form** — элемент формы, клонированный из шаблона.
+- **inputs** — массив всех полей ввода (`.form__input`) формы.
+- **submitButton** — кнопка отправки формы.
+- **validationErrors** — элемент для отображения ошибок валидации.
 
-- `form: HTMLFormElement` — форма контактных данных.
-- `inputs: HTMLInputElement[]` — массив инпутов для ввода данных.
-- `submitButton: HTMLButtonElement` — кнопка отправки формы.
-- `validationErrors: HTMLElement` — блок с ошибками валидации.
+### Параметры
 
-#### Методы:
+- **template**: `HTMLTemplateElement` — шаблон HTML для формы.
+- **events**: `IEvents` — объект для работы с событиями.
 
-- `render(): void` — отрисовывает форму.
+## Поля
+
+- **form**: `HTMLFormElement` — HTML-форма.
+- **inputs**: `HTMLInputElement[]` — массив полей ввода формы.
+- **submitButton**: `HTMLButtonElement` — кнопка отправки формы.
+- **validationErrors**: `HTMLElement` — контейнер для отображения ошибок валидации.
+
+## Методы
+
+- **render()**: `HTMLElement` — отрисовывает и возвращает форму.
+
+### 8. Класс `OrderForm`
+
+Класс `OrderForm` расширяет класс `BaseForm` и реализует интерфейс `IOrderForm` , класс для формы заказа с выбором оплаты и адресом доставки
+
+## Конструктор
+
+constructor(template: HTMLTemplateElement, events: IEvents);
+
+### Тело конструктора
+
+- Вызывает конструктор родительского класса `BaseForm` и передает ему шаблон и объект событий.
+- Инициализирует элементы:
+  - **choiceButtons** — массив кнопок выбора метода оплаты.
+  - **buttonSubmit** — кнопка отправки заказа.
+
+### Параметры
+
+- **template**: `HTMLTemplateElement` — шаблон HTML для формы заказа.
+- **events**: `IEvents` — объект для работы с событиями.
+
+## Поля
+
+- **choiceButtons**: `HTMLButtonElement[]` — кнопки для выбора метода оплаты.
+- **buttonSubmit**: `HTMLButtonElement` — кнопка для отправки заказа.
+
+## Методы
+
+- **set paymentSelection(paymentMethod: string)** — устанавливает выбранный метод оплаты.
+- **render()**: `HTMLElement` — отрисовывает и возвращает форму заказа.
+
+### 9. Класс `ContactsForm`
+
+Класс `ContactsForm` расширяет класс `BaseForm` , класс для формы с контактами клиента
+
+## Конструктор
+
+constructor(template: HTMLTemplateElement, events: IEvents);
+
+### Тело конструктора
+
+- Вызывает конструктор родительского класса `BaseForm` и передает ему шаблон и объект событий.
+- Не добавляет дополнительных полей, так как наследует всю логику от базовой формы.
+
+### Параметры
+
+- **template**: `HTMLTemplateElement` — шаблон HTML для формы контактных данных.
+- **events**: `IEvents` — объект для работы с событиями.
+
+## Методы
+
+- **render()**: `HTMLElement` — отрисовывает и возвращает форму контактных данных, используя метод `render()` базового класса.
 
 ### 10. Класс Modal
 
@@ -347,13 +442,13 @@ constructor(modalContainer: HTMLElement, container: HTMLElement, events: IEvents
 
 - Вызывает конструктор родительского класса `Component` с параметром `container`.
 - Инициализирует элементы:
-  - `_closeButton` — кнопка закрытия модального окна.
+  - `closeButton` — кнопка закрытия модального окна.
   - `content` — контейнер для содержимого модального окна.
-- Добавляет обработчик клика для закрытия окна через `_closeButton`.
+- Добавляет обработчик клика для закрытия окна через `closeButton`.
 
 #### Поля:
 
-- `_closeButton: HTMLButtonElement` — кнопка закрытия модального окна.
+- `closeButton: HTMLButtonElement` — кнопка закрытия модального окна.
 - `content: HTMLElement` — содержимое модального окна.
 
 #### Методы:
@@ -381,8 +476,8 @@ constructor(template: HTMLTemplateElement, basket: Basket, events: IEvents)
 
 #### Поля:
 
-- `_orderList: HTMLElement` — список заказанных товаров.
-- `_orderTotal: HTMLElement` — общая сумма заказа.
+- `orderList: HTMLElement` — список заказанных товаров.
+- `orderTotal: HTMLElement` — общая сумма заказа.
 - `basket: Basket` — объект корзины.
 
 #### Методы:
@@ -413,8 +508,8 @@ constructor(template: HTMLTemplateElement, events: IEvents)
 
 #### Поля:
 
-- `_element: HTMLElement` — контейнер с сообщением об успехе.
-- `_button: HTMLButtonElement` — кнопка для закрытия сообщения или перехода на другую страницу.
+- `element: HTMLElement` — контейнер с сообщением об успехе.
+- `button: HTMLButtonElement` — кнопка для закрытия сообщения или перехода на другую страницу.
 
 #### Методы:
 

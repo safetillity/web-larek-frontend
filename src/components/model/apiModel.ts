@@ -1,6 +1,5 @@
-import { IProduct , IOrderData, IOrderResult } from '../../types/index.ts';
-import { Api , ApiListResponse} from '../base/api';
-
+import { IProduct, IOrderData, IOrderResult } from '../../types/index.ts';
+import { Api, ApiListResponse } from '../base/api';
 
 export class ApiModel extends Api {
 	cdn: string;

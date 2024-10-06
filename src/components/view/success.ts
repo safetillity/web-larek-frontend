@@ -2,8 +2,7 @@ import { IEvents } from '../base/events';
 import { ISuccess } from '../../types/index.ts';
 import { Component } from '../base/component.ts';
 
-export class Success implements Component<ISuccess>{
-
+export class Success implements Component<ISuccess> {
 	success: HTMLElement;
 	description: HTMLElement;
 	button: HTMLButtonElement;
