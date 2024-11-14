@@ -192,7 +192,7 @@ constructor();
 - `countSum(): number` — возвращает общую сумму товаров.
 - `setOrder(order: IProduct): void` — добавляет продукт в корзину.
 - `deleteOrder(order: IProduct): void` — удаляет продукт из корзины.
-- `clearOrders(basketList: IProduct[]): void` — очищает корзину , т.е. удаляет все товары, которые в basketList . В параметр метода вводится список товаров в корзине на момент вызова , и массиву товаров присваивается пустой массив.
+- `clearOrders(): void` — чищает корзину, т.е. присваивает полю basketList пустой массив [].
 
 ### 4. Класс EventEmitter
 
@@ -231,10 +231,6 @@ constructor();
 protected constructor(protected readonly container: HTMLElement)
 ```
 
-#### Параметры:
-
-- `template: HTMLTemplateElement` — элемент , с которым необходимы преобразования.
-
 #### Методы:
 
 - `toggleClass(element: HTMLElement, className: string, state: boolean)` — добавляет или удаляет CSS-класс элемента в зависимости от значения state.
@@ -243,7 +239,8 @@ protected constructor(protected readonly container: HTMLElement)
 - `setHidden(element: HTMLElement)` — скрывает элемент.
 - `setVisible(element: HTMLElement)` — делает элемент видимым.
 - `setImage(element: HTMLImageElement, src: string, alt?: string)` — задает изображение и альтернативный текст для HTML-элемента img.
-- `render(data?: Partial<T>): HTMLElement` — рендерит компонент на основе переданных данных.
+- `render(data?: Partial<T>): HTMLElement` — 
+отвечает за создание , и отображение HTML-элемента, и за динамическое обновление контента .
 
 ### Слой View
 
@@ -292,7 +289,7 @@ constructor(container: HTMLElement, template: HTMLTemplateElement, events: IEven
 #### Конструктор:
 
 ```ts
-constructor(template: HTMLTemplateElement, events: IEvents)
+constructor(element: HTMLElement, events: IEvents)
 ```
 
 #### Тело конструктора:
@@ -307,7 +304,6 @@ constructor(template: HTMLTemplateElement, events: IEvents)
 #### Поля:
 
 - `element: HTMLElement` — контейнер карточки.
-- `id: HTMLElement` — элемент с ID продукта.
 - `title: HTMLElement` — заголовок продукта.
 - `image: HTMLElement` — изображение продукта.
 - `categoty: HTMLElement` — категория продукта.

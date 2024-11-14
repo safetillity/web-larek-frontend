@@ -1,39 +1,49 @@
-import { IProduct, IBasket } from '../../types/index.ts';
-import { Component } from '../base/component.ts';
-import { IEvents } from '../base/events';
+import { IBasket, ICard } from '../../types/index';
+import { Component } from '../base/component';
+import { EventEmitter } from '../base/events';
+import { ensureElement, createElement } from '../../types/fns';
 
 export class Basket extends Component<IBasket> {
-	button: HTMLButtonElement;
-	basket: HTMLElement;
-	basketPrice: HTMLElement;
-	basketList: HTMLElement;
-	basketCounter: HTMLElement;
-	title: HTMLElement;
-	basketButton: HTMLElement;
+	protected listEl: HTMLElement;
+	protected totalPriceEl: HTMLElement;
+	protected buttonEl: HTMLButtonElement;
+	protected buttonDeleteEl: HTMLButtonElement;
 
-	constructor(
-		container: HTMLElement,
-		template: HTMLTemplateElement,
-		protected events: IEvents
-	) {
+	constructor(container: HTMLElement, private events: EventEmitter) {
 		super(container);
-		this.basket = template.content
-			.querySelector('.basket')
-			.cloneNode(true) as HTMLElement;
-		this.title = this.basket.querySelector('.modal__title');
-		this.basketList = this.basket.querySelector('.basket__list');
-		this.button = this.basket.querySelector('.basket__button');
-		this.basketPrice = this.basket.querySelector('.basket__price');
-		this.basketButton = document.querySelector('.header__basket');
-		this.basketCounter = document.querySelector('.header__basket-counter');
-		this.products = [];
+
+		this.listEl = ensureElement<HTMLElement>('.basket__list', this.container);
+		this.totalPriceEl = this.container.querySelector('.basket__price');
+		this.buttonEl = this.container.querySelector('.basket__button');
+		this.buttonDeleteEl = this.container.querySelector('.basket__item-delete');
+
+		this.buttonEl?.addEventListener('click', () =>
+			this.events.emit('order:open')
+		);
+		this.buttonDeleteEl?.addEventListener('click', () =>
+			this.events.emit('item:toggle')
+		);
 	}
 
-	set products(products: IProduct[]) {}
+	set items(items: HTMLElement[]) {
+		if (items.length) {
+			this.listEl.replaceChildren(...items);
+		} else {
+			this.listEl.replaceChildren(
+				createElement<HTMLParagraphElement>('p', {
+					textContent: 'Корзина пуста',
+				})
+			);
 
-	render() {}
+			this.setDisabled(this.buttonEl, true);
+		}
+	}
 
-	renderSum(sum: number) {}
+	set selected(items: ICard[]) {
+		this.setDisabled(this.buttonEl, items.length === 0);
+	}
 
-	renderBasketCounter(value: number) {}
+	set total(total: number | string) {
+		this.totalPriceEl.textContent = `${total} синапсов`;
+	}
 }

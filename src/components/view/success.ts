@@ -1,20 +1,29 @@
-import { IEvents } from '../base/events';
-import { ISuccess } from '../../types/index.ts';
-import { Component } from '../base/component.ts';
+import { ISuccess, ISuccessActions } from '../../types/index';
+import { Component } from '../base/component';
+import { ensureElement } from '../../types/fns';
 
-export class Success implements Component<ISuccess> {
-	success: HTMLElement;
-	description: HTMLElement;
-	button: HTMLButtonElement;
+export class Success extends Component<ISuccess> {
+	protected closeEl: HTMLElement;
+	protected descriptionEl: HTMLElement;
 
-	constructor(template: HTMLTemplateElement, protected events: IEvents) {
-		this.success = template.content
-			.querySelector('.order-success')
-			.cloneNode(true) as HTMLElement;
-		this.description = this.success.querySelector(
-			'.order-success__description'
+	constructor(container: HTMLElement, actions: ISuccessActions) {
+		super(container);
+
+		this.closeEl = ensureElement<HTMLElement>(
+			'.order-success__close',
+			this.container
 		);
-		this.button = this.success.querySelector('.order-success__close');
+		this.descriptionEl = ensureElement<HTMLElement>(
+			'.order-success__description',
+			this.container
+		);
+
+		if (actions?.onClick) {
+			this.closeEl.addEventListener('click', actions.onClick);
+		}
 	}
-	render(sum: number): HTMLElement {}
+
+	set total(value: string) {
+		this.descriptionEl.textContent = `Списано ${value} синапсов`;
+	}
 }
