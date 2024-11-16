@@ -5,7 +5,7 @@ export interface IApi {
 }
 
 export interface IOrderData {
-	sum: number;
+	total: number;
 	payment: string;
 	email: string;
 	phone: string;
@@ -16,14 +16,6 @@ export interface IOrderData {
 export interface IOrderResults {
 	id: string;
 	total: number;
-}
-
-export interface IAppData {
-	catalog: ICard[];
-	order: IOrderData;
-	preview: string | null;
-	formErrors: ValidationErrors;
-	basket: ICard[];
 }
 
 export interface IBasket {
@@ -82,7 +74,7 @@ export type TOrderContacts = Pick<IOrderData, 'email' | 'phone'>;
 export type TOrderFormData = TOrderContacts & TOrderPayment;
 export type ValidationErrors = Partial<Record<keyof IOrderData, string>>;
 
-export const API_URL = `${process.env.API_ORIGIN}/api/weblarek`;
-export const CDN_URL = `${process.env.API_ORIGIN}/content/weblarek`;
+export const API_URL = `https://larek-api.nomoreparties.co/api/weblarek`;
+export const CDN_URL = `https://larek-api.nomoreparties.co/content/weblarek`;
 
 export const settings = {};

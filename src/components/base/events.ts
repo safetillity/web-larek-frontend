@@ -1,5 +1,3 @@
-// Хорошая практика даже простые типы выносить в алиасы
-// Зато когда захотите поменять это достаточно сделать в одном месте
 type EventName = string | RegExp;
 type Subscriber = Function;
 type EmitterEvent = {
@@ -16,11 +14,6 @@ export interface IEvents {
 	): (data: T) => void;
 }
 
-/**
- * Брокер событий, классическая реализация
- * В расширенных вариантах есть возможность подписаться на все события
- * или слушать события по шаблону например
- */
 export class EventEmitter implements IEvents {
 	_events: Map<EventName, Set<Subscriber>>;
 
@@ -28,9 +21,6 @@ export class EventEmitter implements IEvents {
 		this._events = new Map<EventName, Set<Subscriber>>();
 	}
 
-	/**
-	 * Установить обработчик на событие
-	 */
 	on<T extends object>(eventName: EventName, callback: (event: T) => void) {
 		if (!this._events.has(eventName)) {
 			this._events.set(eventName, new Set<Subscriber>());
@@ -38,21 +28,15 @@ export class EventEmitter implements IEvents {
 		this._events.get(eventName)?.add(callback);
 	}
 
-	/**
-	 * Снять обработчик с события
-	 */
 	off(eventName: EventName, callback: Subscriber) {
 		if (this._events.has(eventName)) {
-			this._events.get(eventName)!.delete(callback);
+			this._events.get(eventName).delete(callback);
 			if (this._events.get(eventName)?.size === 0) {
 				this._events.delete(eventName);
 			}
 		}
 	}
 
-	/**
-	 * Инициировать событие с данными
-	 */
 	emit<T extends object>(eventName: string, data?: T) {
 		this._events.forEach((subscribers, name) => {
 			if (
@@ -64,22 +48,23 @@ export class EventEmitter implements IEvents {
 		});
 	}
 
-	/**
-	 * Слушать все события
-	 */
 	onAll(callback: (event: EmitterEvent) => void) {
 		this.on('*', callback);
 	}
 
-	/**
-	 * Сбросить все обработчики
-	 */
 	offAll() {
 		this._events = new Map<string, Set<Subscriber>>();
 	}
 
 	/**
-	 * Сделать коллбек триггер, генерирующий событие при вызове
+	 * Return a function that triggers an event with a given name,
+	 * using the passed context as defaults for the event data.
+	 * The returned function takes an optional event object
+	 * and merges it with the context, then calls emit with the result.
+	 *
+	 * @param eventName the event name
+	 * @param context the default event data
+	 * @returns a function that triggers the event
 	 */
 	trigger<T extends object>(eventName: string, context?: Partial<T>) {
 		return (event: object = {}) => {

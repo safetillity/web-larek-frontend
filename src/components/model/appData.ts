@@ -1,5 +1,4 @@
 import {
-	IAppData,
 	ICard,
 	IOrderData,
 	TOrderFormData,
@@ -7,40 +6,42 @@ import {
 } from '../../types/index';
 import { IEvents } from '../base/events';
 
-export class AppData implements IAppData {
+export class AppData {
 	basket: ICard[] = [];
 	catalog: ICard[] = [];
 	order: IOrderData = {
 		email: '',
 		phone: '',
 		payment: '',
-		sum: 0,
+		total: 0,
 		address: '',
 		items: [],
 	};
 	preview: string | null = null;
 	formErrors: ValidationErrors = {};
-	events: IEvents;
 
-	constructor(events: IEvents) {
-		this.events = events;
+	constructor(protected events: IEvents) {}
+
+	// Сообщить всем что модель поменялась
+	emitChanges(event: string, payload?: object) {
+		this.events.emit(event, payload ?? {});
 	}
 
 	setCatalog(items: ICard[]) {
-		this.catalog = [...items];
-		this.events.emit('catalog:updated', { catalog: this.catalog });
+		this.catalog = [...this.catalog, ...items];
+		this.emitChanges('cards:changed', { catalog: this.catalog });
 	}
 
 	setPreview(item: ICard) {
 		this.preview = item.id;
-		this.events.emit('preview:updated', item);
+		this.emitChanges('preview:changed', item);
 	}
 
 	getButtonStatus(item: ICard) {
 		if (item.price === null) {
 			return 'Не для продажи';
 		}
-		if (!this.basket.some((card) => card.id === item.id)) {
+		if (!this.basket.some((card) => card.id == item.id)) {
 			return 'Добавить в корзину';
 		} else {
 			return 'Убрать из корзины';
@@ -48,86 +49,79 @@ export class AppData implements IAppData {
 	}
 
 	toggleBasketCard(item: ICard) {
-		if (!this.basket.some((card) => card.id === item.id)) {
-			this.addCardToBasket(item);
-		} else {
-			this.deleteCardFromBasket(item);
-		}
+		return !this.basket.some((card) => card.id === item.id)
+			? this.addCardToBasket(item)
+			: this.deleteCardFromBasket(item);
 	}
 
 	addCardToBasket(item: ICard) {
 		this.basket = [...this.basket, item];
-		this.events.emit('basket:updated', { basket: this.basket });
+		this.emitChanges('basket:changed');
 	}
 
 	deleteCardFromBasket(item: ICard) {
 		this.basket = this.basket.filter((card) => card.id !== item.id);
-		this.events.emit('basket:updated', { basket: this.basket });
+		this.emitChanges('basket:changed');
 	}
 
 	getCardIndex(item: ICard) {
-		return this.basket.indexOf(item) + 1;
+		return Number(this.basket.indexOf(item)) + 1;
 	}
 
 	clearBasket() {
 		this.basket = [];
-		this.events.emit('basket:cleared');
+		this.emitChanges('basket:changed');
 	}
 
 	clearOrder() {
 		this.order = {
-			sum: 0,
+			total: 0,
 			items: [],
 			email: '',
 			phone: '',
 			address: '',
 			payment: '',
 		};
-		this.events.emit('order:cleared');
 	}
 
 	setBasketToOrder() {
-		this.order.items = this.basket.map((card) => card.id);
-		this.order.sum = this.getBasketTotal();
-		this.events.emit('order:updated', { order: this.order });
+	
+		this.order.total = this.getBasketTotal();
+		this.order.items = this.basket.map((item) => item.id);
 	}
 
 	getBasketTotal() {
-		return this.basket.reduce((total, product) => total + product.price, 0);
+		const total = this.basket.reduce((total, item) => {
+			return total + (item.price || 0);
+		}, 0);
+		return total;
+
+		
 	}
 
 	setOrderPayment(value: string) {
 		this.order.payment = value;
-		this.emitOrderChanges();
 	}
 
 	setOrderAddress(value: string) {
 		this.order.address = value;
-		this.emitOrderChanges();
 	}
 
 	setOrderPhone(value: string) {
 		this.order.phone = value;
-		this.emitOrderChanges();
 	}
 
 	setOrderEmail(value: string) {
 		this.order.email = value;
-		this.emitOrderChanges();
 	}
 
 	setOrderField(field: keyof TOrderFormData, value: string) {
 		this.order[field] = value;
 		this.validateOrder();
-		this.emitOrderChanges();
-	}
-
-	private emitOrderChanges() {
-		this.events.emit('order:updated', { order: this.order });
 	}
 
 	validateOrder() {
-		const errors: ValidationErrors = {};
+		const errors: typeof this.formErrors = {};
 
 		if (!this.order.email) {
 			errors.email = `Необходимо указать почту`;
@@ -143,7 +137,7 @@ export class AppData implements IAppData {
 		}
 
 		this.formErrors = errors;
-		this.events.emit('formErrors:updated', this.formErrors);
+		this.events.emit('formErrors:changed', this.formErrors);
 		return Object.keys(errors).length === 0;
 	}
 }

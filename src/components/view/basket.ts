@@ -1,49 +1,42 @@
-import { IBasket, ICard } from '../../types/index';
+import { IBasket } from '../../types/index';
 import { Component } from '../base/component';
-import { EventEmitter } from '../base/events';
+import { IEvents } from '../base/events';
 import { ensureElement, createElement } from '../../types/fns';
 
 export class Basket extends Component<IBasket> {
 	protected listEl: HTMLElement;
-	protected totalPriceEl: HTMLElement;
-	protected buttonEl: HTMLButtonElement;
-	protected buttonDeleteEl: HTMLButtonElement;
+	protected sumEl: HTMLElement;
+	protected buttonEl: HTMLElement;
 
-	constructor(container: HTMLElement, private events: EventEmitter) {
+	constructor(container: HTMLElement, protected events: IEvents) {
 		super(container);
 
 		this.listEl = ensureElement<HTMLElement>('.basket__list', this.container);
-		this.totalPriceEl = this.container.querySelector('.basket__price');
+		this.sumEl = this.container.querySelector('.basket__price');
 		this.buttonEl = this.container.querySelector('.basket__button');
-		this.buttonDeleteEl = this.container.querySelector('.basket__item-delete');
 
-		this.buttonEl?.addEventListener('click', () =>
-			this.events.emit('order:open')
-		);
-		this.buttonDeleteEl?.addEventListener('click', () =>
-			this.events.emit('item:toggle')
-		);
+		if (this.buttonEl) {
+			this.buttonEl.addEventListener('click', () => {
+				events.emit('order:open');
+			});
+		}
+
+		this.items = [];
 	}
 
 	set items(items: HTMLElement[]) {
 		if (items.length) {
 			this.listEl.replaceChildren(...items);
+			this.setDisabled(this.buttonEl, false);
 		} else {
 			this.listEl.replaceChildren(
-				createElement<HTMLParagraphElement>('p', {
-					textContent: 'Корзина пуста',
-				})
+				createElement('p', { textContent: 'Товары еще не добавлены в корзину' })
 			);
-
 			this.setDisabled(this.buttonEl, true);
 		}
 	}
 
-	set selected(items: ICard[]) {
-		this.setDisabled(this.buttonEl, items.length === 0);
-	}
-
-	set total(total: number | string) {
-		this.totalPriceEl.textContent = `${total} синапсов`;
+	set total(total: number) {
+		this.setText(this.sumEl, `${total} синапсов`);
 	}
 }

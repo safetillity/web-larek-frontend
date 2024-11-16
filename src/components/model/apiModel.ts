@@ -8,6 +8,7 @@ export class ApiModel extends Api implements IApi {
 		super(baseUrl, options);
 		this.cdn = cdn;
 	}
+
 	getProductItem(id: string): Promise<ICard> {
 		return this.get(`/product/${id}`).then((item: ICard) => ({
 			...item,
