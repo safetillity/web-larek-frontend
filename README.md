@@ -117,13 +117,11 @@ on<T>(event: EventName, callback: (data: T) => void): void — подписыв�
 off(event: EventName, callback: Subscriber): void — отписывает от события.
 emit<T>(eventName: string, data?: T): void — инициирует событие.
 trigger<T>(event: string, context?: Partial<T>): (data: T) => void — создает триггер для событий.
+
 5. Класс Component
 Класс Component управляет отображением и состоянием элементов интерфейса.
 
 Конструктор:
-
-
-
 
 
 protected constructor(protected readonly container: HTMLElement)
