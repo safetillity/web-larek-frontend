@@ -242,3 +242,4 @@ constructor(template: HTMLTemplateElement, events: IEvents)
 - `render(): HTMLElement`
 - `set total(value: string): void`
 
+```
