@@ -78,36 +78,46 @@ options: RequestInit — настройки запроса, такие как з
 
 get(uri: string): Promise<object> — выполняет GET запрос к указанному URI.
 post(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<object> — выполняет POST запрос с данными.
+
+
 2. Класс ApiModel
-Класс ApiModel наследуется от Api и реализует IApi, добавляя специфические методы для работы с продуктами.
-
+Класс ApiModel является наследником класса Api и реализует интерфейс IApiModel, добавляя специфические методы для работы с продуктами.
+поле :  readonly cdn: string указывающая на базовый URL для контентной доставки
 Конструктор:
-
-constructor(cdn: string, baseUrl: string, options?: RequestInit)
+constructor(cdn: string, serviceBaseUrl: string, requestOptions?: RequestInit): Конструктор принимает три параметра: cdn (строка, указывающая на базовый URL для контентной доставки), serviceBaseUrl (строка, указывающая на базовый URL API сервиса) и requestOptions (опциональный параметр для настройки запросов).
 Методы:
+fetchProductDetails(productId: string): Promise<ICard>: Метод получает информацию о конкретном продукте по его идентификатору productId. Возвращает промис, который разрешается в объект ICard, дополненный URL изображения, формируемым на основе cdn.
 
-getProductItem(id: string): Promise<ICard> — получает информацию о конкретном продукте по его идентификатору.
-getProductList(): Promise<ICard[]> — получает список продуктов.
-orderItems(order: IOrderData): Promise<IOrderResults> — размещает заказ.
+fetchAllProducts(): Promise<ICard[]>: Метод получает список всех продуктов. Возвращает промис, который разрешается в массив объектов ICard, каждый из которых также содержит URL изображения, сформированный на основе cdn.
+
+placeOrder(orderData: IOrderData): Promise<IOrderResults>: Метод размещает заказ с использованием данных orderData. Возвращает промис, который разрешается в объект IOrderResults, содержащий информацию о результате размещения заказа.
+
+
 3. Класс appData
-Класс appData управляет данными приложения, такими как каталог товаров и информация о заказе.
+Класс AppData управляет данными приложения, включая корзину товаров, каталог товаров и информацию о заказе. Он также отвечает за валидацию данных заказа и взаимодействие с событиями в приложении.
 
 Поля:
-
-basket: ICard[] — массив корзины.
-catalog: ICard[] — массив товаров каталога.
-order: IOrderData — объект с информацией о заказе.
+basket: ICard[] — массив корзины, содержащий товары, добавленные пользователем.
+catalog: ICard[] — массив товаров каталога, представляющий доступные для покупки товары.
+order: IOrderData — объект с информацией о заказе, включая контактные данные, способ оплаты и список товаров.
+preview: string | null — строка для хранения идентификатора товара, выбранного для предварительного просмотра.
+formErrors: ValidationErrors — объект для хранения ошибок валидации формы заказа.
 Методы:
+initializeOrder(): IOrderData — инициализирует объект заказа с пустыми значениями.
+updateCatalog(newItems: ICard[]): void — обновляет каталог товаров, добавляя новые элементы.
+setPreview(item: ICard): void — устанавливает предварительный просмотр выбранного товара.
+getElementStatus(card: ICard): string — возвращает статус элемента в зависимости от наличия в корзине и цены.
+toggleBasketItem(card: ICard): void — добавляет или удаляет товар из корзины.
+addItemToBasket(item: ICard): void — добавляет товар в корзину.
+removeItemFromBasket(card: ICard): void — удаляет товар из корзины.
+getCardIndex(item: ICard): number — возвращает индекс товара в корзине (начиная с 1).
+clearBasket(): void — очищает корзину и уведомляет об изменениях.
+setOrderFromBasket(): void — устанавливает данные заказа на основе содержимого корзины.
+getBasketTotal(): number — вычисляет общую стоимость товаров в корзине.
+updateOrderField<K extends keyof TOrderFormData>(field: K, value: string): void — обновляет указанное поле в объекте заказа и запускает валидацию.
+validateOrder(): void — выполняет валидацию данных заказа и обновляет объект ошибок.
+clearOrder(): void — очищает данные заказа и уведомляет об изменениях.
 
-setButtonStatus(item: ICard): boolean
-setCatalog(items: ICard[]): void
-setAddress(address: string): string
-validateOrder(address: string): boolean
-setOrderContacts(contact: number | string): number | string
-validateOrderContacts(contact: number | string): boolean
-setPaymentSelection(payment: string): string
-validatePaymentSelection(payment: string): boolean
-clearOrderData(): void
 Слой Presenter
 4. Класс EventEmitter
 Класс EventEmitter реализует систему событий и подписок.
@@ -119,127 +129,226 @@ emit<T>(eventName: string, data?: T): void — инициирует событи
 trigger<T>(event: string, context?: Partial<T>): (data: T) => void — создает триггер для событий.
 
 5. Класс Component
-Класс Component управляет отображением и состоянием элементов интерфейса.
+Класс абстрактный Component управляет отображением и состоянием элементов интерфейса.
 
 Конструктор:
-
-
-protected constructor(protected readonly container: HTMLElement)
+protected constructor(protected readonly container: HTMLElement): Конструктор принимает один параметр container (HTMLElement), который представляет собой контейнер для компонентов, управляемых этим классом.
 Методы:
+updateClass(element: HTMLElement, className: string, add: boolean): Метод добавляет или удаляет класс className у элемента element в зависимости от значения параметра add.
 
-toggleClass(element: HTMLElement, className: string, state: boolean)
-setText(element: HTMLElement, value: string)
-setDisabled(element: HTMLElement, state: boolean)
-setHidden(element: HTMLElement)
-setVisible(element: HTMLElement)
-setImage(element: HTMLImageElement, src: string, alt?: string)
-render(data?: Partial<T>): HTMLElement
+updateText(target: HTMLElement, content: unknown): void: Метод обновляет текстовое содержимое элемента target, преобразуя переданное значение content в строку.
+
+setElementState(target: HTMLElement, isDisabled: boolean): void: Метод устанавливает состояние элемента target как отключенное или активное в зависимости от значения isDisabled.
+
+hideElement(target: HTMLElement): void: Метод скрывает элемент target, устанавливая его стиль отображения в 'none'.
+
+showElement(target: HTMLElement): void: Метод делает элемент target видимым, сбрасывая стиль отображения.
+
+updateImage(imageElement: HTMLImageElement, source: string, alternativeText?: string): void: Метод обновляет источник изображения imageElement и, при наличии, устанавливает альтернативный текст alternativeText.
+
+render(properties?: Partial<T>): HTMLElement: Метод рендерит компонент, обновляя его свойства на основе переданных данных properties, если они указаны, и возвращает контейнер this.container.
 Слой View
 6. Класс Basket
-Класс BasketModel управляет корзиной пользователя и отображает корзину на странице.
+Класс Basket управляет отображением и состоянием корзины покупок в интерфейсе.
+
+Поля:
+protected itemList: HTMLElement: Элемент, представляющий список товаров в корзине. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .basket__list внутри контейнера.
+
+protected totalAmount: HTMLElement: Элемент, отвечающий за отображение общей суммы товаров в корзине. Инициализируется в конструкторе с помощью метода querySelector, который ищет элемент с классом .basket__price.
+
+protected actionButton: HTMLElement: Элемент кнопки для оформления заказа. Инициализируется в конструкторе с помощью метода querySelector, который ищет элемент с классом .basket__button.
 
 Конструктор:
-
-
-constructor(container: HTMLElement, protected events: IEvents);
+constructor(container: HTMLElement, protected events: IEvents): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер для корзины, и events (интерфейс IEvents), который используется для обработки событий. Внутри конструктора инициализируются элементы: itemList, totalAmount и actionButton. Также вызываются методы setupActionButton для настройки обработчика событий на кнопке и clearBasket для очистки корзины.
 Методы:
+private setupActionButton(): void: Приватный метод, который устанавливает обработчик события клика на кнопке actionButton. При нажатии на кнопку вызывается событие order:open.
 
-set items(items: HTMLElement[]): void
-set total(total: number): void
+set items(items: HTMLElement[]): Сеттер для свойства items, который принимает массив элементов HTMLElement. Если массив не пустой, он заменяет содержимое itemList на переданные элементы и активирует кнопку. Если массив пустой, вызывается метод displayEmptyMessage.
+
+private displayEmptyMessage(): void: Приватный метод, который отображает сообщение о том, что товары еще не добавлены в корзину. Он также отключает кнопку actionButton.
+
+public clearBasket(): void: Публичный метод, который очищает корзину, устанавливая items в пустой массив и вызывая метод displayEmptyMessage.
+
+set total(total: number): Сеттер для свойства total, который принимает число total и обновляет текстовое содержимое элемента totalAmount, отображая общую сумму .
 7. Класс Card
-Класс Card отображает карточку продукта и реализует интерфейс ICard.
+
+Класс Card представляет собой компонент карточки товара, который отображает информацию о продукте, включая его название, изображение, цену, описание и категорию. Он также предоставляет возможность обрабатывать события, связанные с действием на карточке, например, нажатие кнопки.
+
+Поля:
+protected titleElement: HTMLElement: Элемент, представляющий заголовок (название) товара. Инициализируется в методе initializeElements.
+
+protected imageElement: HTMLImageElement | null: Элемент изображения товара. Инициализируется в методе initializeElements.
+
+protected actionButton: HTMLButtonElement | null: Кнопка действия (например, "Добавить в корзину"). Инициализируется в методе initializeElements.
+
+protected categoryLabel: HTMLSpanElement | null: Элемент, отображающий категорию товара. Инициализируется в методе initializeElements.
+
+protected priceLabel: HTMLSpanElement: Элемент, отображающий цену товара. Инициализируется в методе initializeElements.
+
+protected descriptionElement: HTMLElement | null: Элемент, отображающий описание товара. Инициализируется в методе initializeElements.
 
 Конструктор:
-
-constructor(container: HTMLElement, actions?: ICardActions);
+constructor(container: HTMLElement, handlers?: ICardActions): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер для карточки, и handlers (интерфейс ICardActions), который содержит обработчики событий. Внутри конструктора инициализируются элементы с помощью метода initializeElements и связываются обработчики событий через метод bindEventHandlers.
 Методы:
+private initializeElements(container: HTMLElement): void: Приватный метод, который инициализирует элементы карточки, такие как заголовок, цена, категория, кнопка и изображение.
 
-set id(value: string): void
-get id(): string
-set title(value: string): void
-get title(): string
-set description(value: string): void
-get description(): string
-set price(value: string): void
-get price(): string
-set image(value: string): void
-set category(value: string): void
-get category(): string
-set button(value: string): void
-8. Класс BasketCard
-Класс BasketCard расширяет класс Card и предназначен для отображения карточки товара в корзине.
+private bindEventHandlers(handlers?: ICardActions): void: Приватный метод, который связывает обработчик события клика на кнопке действия, если он предоставлен.
+
+set productId(id: string): Сеттер для идентификатора продукта, который сохраняет значение в атрибуте data-id контейнера.
+
+get productId(): string: Геттер для получения идентификатора продукта.
+
+set productTitle(title: string): Сеттер для названия товара, который обновляет текст заголовка.
+
+get productTitle(): string: Геттер для получения названия товара.
+
+set productDescription(description: string): Сеттер для описания товара, который обновляет текст описания.
+
+get productDescription(): string: Геттер для получения описания товара.
+
+set productPrice(price: number | null): Сеттер для цены товара, который форматирует и обновляет текст цены. Если цена равна null, отображает сообщение "Бесценно".
+
+get productPrice(): string: Геттер для получения цены товара.
+
+set productImage(src: string): Сеттер для изображения товара, который обновляет источник изображения.
+
+set productCategory(category: string): Сеттер для категории товара, который обновляет текст категории и добавляет класс, если категория известна.
+
+get productCategory(): string: Геттер для получения категории товара.
+
+set actionButtonText(text: string): Сеттер для текста кнопки действия.
+
+protected toggleButtonState(disable: boolean): void: Приватный метод, который включает или отключает кнопку действия.
+
+renderCard(properties?: Partial<ICard>): HTMLElement: Метод для рендеринга карточки с заданными свойствами. Обновляет данные карточки на основе переданных свойств.
+
+
+8. Класс BasketItem
+Класс BasketItem
+Класс BasketItem наследует от класса Card и представляет собой элемент карточки товара, который находится в корзине. Он добавляет функциональность для отображения индекса товара в корзине и кнопки для удаления товара.
+
+Поля:
+protected indexElement: HTMLElement: Элемент, представляющий индекс (порядковый номер) товара в корзине. Инициализируется в конструкторе.
+
+protected removeButton: HTMLButtonElement: Кнопка для удаления товара из корзины. Инициализируется в конструкторе.
 
 Конструктор:
-
-constructor(container: HTMLElement, actions?: ICardActions);
+constructor(container: HTMLElement, handlers?: ICardActions): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер для элемента корзины, и handlers ( интерфейс ICardActions), который содержит обработчики событий. Внутри конструктора вызывается конструктор родительского класса Card и инициализируются элементы indexElement и removeButton. Также связывается обработчик события для кнопки удаления.
 Методы:
+private bindRemoveButtonEvent(handlers?: ICardActions): void: Приватный метод, который связывает обработчик события клика на кнопке удаления, если он предоставлен.
 
-set index(value: number): void
-9. Класс Form
-Класс Form реализует интерфейс IForm и представляет собой базовую форму.
+set itemIndex(index: number): Сеттер для индекса товара, который обновляет текст индекса в элементе indexElement.
 
-Конструктор:
 
-constructor(container: HTMLFormElement, events: IEvents);
-Методы:
 
-set valid(value: boolean): void
-set errors(value: string): void
-clearValue(): void
+
+
 render(state: Partial<T> & IForm): HTMLElement
-10. Класс OrderForm
-Класс OrderForm расширяет класс Form и предназначен для создания формы заказа.
+
+9. Класс Modal
+Класс Modal представляет собой компонент модального окна, который управляет отображением контента и взаимодействием с пользователем. Он позволяет открывать и закрывать модальное окно, а также обрабатывать события, связанные с его взаимодействием.
+
+Поля:
+protected closeButton: HTMLButtonElement: Элемент кнопки закрытия модального окна. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .modal__close внутри контейнера.
+
+protected contentElement: HTMLElement: Элемент, представляющий содержимое модального окна. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .modal__content внутри контейнера.
 
 Конструктор:
-
-constructor(container: HTMLFormElement, events: IEvents);
+constructor(container: HTMLElement, protected events: IEvents): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер для модального окна, и events (интерфейс IEvents), который используется для обработки событий. Внутри конструктора инициализируются элементы closeButton и contentElement, а также вызывается метод attachEventListeners для привязки обработчиков событий.
 Методы:
+private attachEventListeners(): void: Приватный метод, который устанавливает обработчики событий для элементов модального окна. Он связывает клики на кнопке закрытия и на самом контейнере с методом close, предотвращает всплытие событий клика на элементе contentElement, а также добавляет обработчик нажатия клавиш для закрытия модального окна при нажатии клавиши Escape.
 
-set address(value: string): void
-togglePayment(value: HTMLElement): void
-clearPayment(): void
+private handleKeyDown(event: KeyboardEvent): void: Приватный метод, который обрабатывает нажатия клавиш. Если нажата клавиша Escape, вызывается метод close.
+
+set content(value: HTMLElement | null): Сеттер для содержимого модального окна. Если переданное значение равно null, очищается содержимое contentElement. В противном случае содержимое заменяется на переданный элемент.
+
+open(): Метод для открытия модального окна. Он добавляет класс modal_active к контейнеру и вызывает событие modal:opened.
+
+close(): Метод для закрытия модального окна. Он удаляет класс modal_active из контейнера, очищает содержимое модального окна и вызывает событие modal:closed.
+
+render(data: IModal): HTMLElement: Метод для рендеринга модального окна с заданными данными. Вызывает метод render родительского класса и открывает модальное окно. Возвращает контейнер модального окна.
+10.Класс BaseForm
+Класс BaseForm представляет собой базовый компонент формы, который управляет состоянием формы, обработкой ввода пользователя и валидацией. Он предоставляет функциональность для обработки событий, связанных с изменением полей формы и отправкой данных.
+
+Поля:
+protected submitButton: HTMLButtonElement: Элемент кнопки отправки формы. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент кнопки с типом submit внутри формы.
+
+protected errorContainer: HTMLElement: Элемент, предназначенный для отображения сообщений об ошибках валидации формы. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .form__errors внутри формы.
+
+Конструктор:
+constructor(protected formElement: HTMLFormElement, protected events: IEvents): Конструктор принимает два параметра: formElement (HTMLFormElement), представляющий саму форму, и events (интерфейс IEvents), который используется для обработки событий. Внутри конструктора инициализируются элементы submitButton и errorContainer. Также устанавливаются обработчики событий для отслеживания ввода в поля формы и для обработки отправки формы.
+Методы:
+protected onFieldChange(field: keyof T, value: string): Приватный метод, который вызывается при изменении значения поля формы. Он генерирует событие, указывающее на изменение конкретного поля, передавая его имя и новое значение.
+
+set isValid(isValid: boolean): Сеттер для свойства isValid, который включает или отключает кнопку отправки формы в зависимости от переданного значения. Если форма валидна, кнопка будет активна; если нет — отключена.
+
+set errorMessage(message: string): Сеттер для отображения сообщения об ошибке. Он обновляет текст в элементе errorContainer с помощью метода updateText.
+
+resetForm(): Метод для сброса формы, который вызывает метод reset на элементе формы, очищая все поля.
+
+renderForm(state: Partial<T> & IBaseForm): Метод для рендеринга формы с заданным состоянием. Он принимает объект состояния, содержащий информацию о валидности, ошибках и полях формы. Метод вызывает render родительского класса и обновляет поля формы на основе переданных данных, используя Object.assign.
+
+
 11. Класс ContactsForm
-Класс ContactsForm расширяет класс Form и предназначен для сбора контактных данных клиента.
+Класс PaymentForm
+Класс PaymentForm представляет собой компонент формы оплаты, который расширяет функциональность базовой формы BaseForm. Он управляет вводом адреса и выбором метода оплаты (наличные или онлайн). Класс также обрабатывает события, связанные с изменением метода оплаты, и обеспечивает визуальные изменения для выбранной кнопки оплаты.
+
+Поля:
+protected addressInput: HTMLInputElement: Элемент ввода для адреса. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент ввода с именем address внутри формы.
+
+protected cashButton: HTMLButtonElement: Кнопка для выбора метода оплаты наличными. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент кнопки с именем cash внутри формы.
+
+protected onlineButton: HTMLButtonElement: Кнопка для выбора метода онлайн-оплаты (например, с помощью карты). Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент кнопки с именем card внутри формы.
 
 Конструктор:
-
-constructor(container: HTMLFormElement, events: IEvents);
+constructor(formElement: HTMLFormElement, events: IEvents): Конструктор принимает два параметра: formElement (HTMLFormElement), представляющий саму форму, и events (интерфейс IEvents), используемый для обработки событий. Внутри конструктора инициализируются элементы addressInput, cashButton и onlineButton. Также устанавливаются обработчики событий для кнопок оплаты, которые генерируют событие order:changed при нажатии на соответствующую кнопку.
 Методы:
+highlightPaymentButton(button: HTMLElement): Метод для выделения выбранной кнопки оплаты. Он сначала очищает выделение с других кнопок, а затем добавляет класс button_alt-active к переданной кнопке, чтобы визуально обозначить ее как активную.
 
-set email(value: string): void
-set phone(value: string): void
-12. Класс Modal
-Класс Modal управляет модальными окнами и расширяет класс Component<IModal>.
+clearPaymentHighlight(): Метод для очистки выделения с кнопок оплаты. Он удаляет класс button_alt-active с обеих кнопок (наличные и онлайн), возвращая их к исходному состоянию.
+
+set address(value: string): Сеттер для адреса. Он устанавливает значение в элемент ввода addressInput, обновляя текстовое поле адреса.
+
+12. Класс Page
+Класс Page
+Класс Page представляет собой компонент страницы, который управляет различными элементами интерфейса, такими как счетчик товаров в корзине, галерея и главный контейнер страницы. Он также обрабатывает события, связанные с взаимодействием пользователя с элементами страницы, такими как открытие корзины.
+
+Поля:
+protected basketCounterElement: HTMLElement: Элемент, отображающий количество товаров в корзине. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .header__basket-counter.
+
+protected galleryElement: HTMLElement: Элемент галереи, в который будут помещаться товары или изображения. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .gallery.
+
+protected mainWrapper: HTMLElement: Основной контейнер страницы, который может быть заблокирован или разблокирован в зависимости от состояния. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .page__wrapper.
+
+protected headerBasketElement: HTMLElement: Элемент заголовка, представляющий корзину. Инициализируется в конструкторе с помощью функции ensureElement, которая находит элемент с классом .header__basket.
 
 Конструктор:
-
-constructor(container: HTMLElement, events: IEvents);
+constructor(container: HTMLElement, protected events: IEvents): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер страницы, и events (интерфейс IEvents), который используется для обработки событий. Внутри конструктора инициализируются элементы basketCounterElement, galleryElement, mainWrapper и headerBasketElement. Также устанавливается обработчик события для клика на элементе headerBasketElement, который генерирует событие basket:show, сигнализируя о том, что корзина должна быть показана.
 Методы:
+private initEventListeners(): void: Приватный метод, который инициализирует обработчики событий. В данном случае он добавляет обработчик клика для элемента headerBasketElement, который вызывает метод handleBasketClick.
 
-set content(value: HTMLElement): void
-open(): void
-close(): void
-13. Класс Page
-Класс Page управляет страницей приложения и расширяет класс Component<IPage>.
+private handleBasketClick(): void: Приватный метод, который обрабатывает клики на элементе корзины. Он генерирует событие basket:show, уведомляя другие части приложения о необходимости показать корзину.
+
+public set counter(value: number): Сеттер для обновления счетчика товаров в корзине. Он обновляет текст в элементе basketCounterElement, преобразуя переданное значение в строку.
+
+public set catalog(items: HTMLElement[]): Сеттер для обновления содержимого галереи. Он заменяет дочерние элементы в galleryElement на переданные элементы, тем самым обновляя галерею.
+
+public set locked(value: boolean): Сеттер для блокировки или разблокировки основного контейнера страницы. Он добавляет или удаляет класс page__wrapper_locked в зависимости от переданного значения, что может использоваться для управления доступом к элементам страницы.
+
+13. Класс Success
+об успешном завершении операции, например, успешной оплаты заказа. Он предоставляет пользователю возможность закрыть уведомление и отображает информацию о сумме, которая была списана.
+
+Поля:
+protected closeButton: HTMLElement: Элемент кнопки закрытия уведомления. Инициализируется в методе initializeElements, который находит элемент с классом .order-success__close внутри контейнера.
+
+protected messageElement: HTMLElement: Элемент, отображающий сообщение об успешной операции. Инициализируется в методе initializeElements, который находит элемент с классом .order-success__description внутри контейнера.
 
 Конструктор:
-
-constructor(container: HTMLElement, events: IEvents);
+constructor(container: HTMLElement, actions: ISuccessActions): Конструктор принимает два параметра: container (HTMLElement), представляющий контейнер для компонента, и actions (интерфейс ISuccessActions), который содержит действия, связанные с успешным завершением операции. Внутри конструктора вызываются методы initializeElements для инициализации элементов и bindEventHandlers для связывания обработчиков событий.
 Методы:
-   - `set counter(value: number): void`
-   - `set catalog(items: HTMLElement[]): void`
-   - `set locked(value: boolean): void`
+private initializeElements(): void: Приватный метод, который инициализирует элементы closeButton и messageElement, используя функцию ensureElement для поиска соответствующих элементов в контейнере.
 
-14. Класс Success
-Класс **Success** отвечает за отображение успешного оформления заказа.
+private bindEventHandlers(actions?: ISuccessActions): void: Приватный метод, который связывает обработчики событий с элементами компонента. Если в actions передан метод onClick, он добавляет обработчик клика на кнопку closeButton, который будет вызывать это действие при нажатии.
 
-- **Конструктор**:
-
-constructor(template: HTMLTemplateElement, events: IEvents)
-
-
-- **Методы**:
-- `render(): HTMLElement`
-- `set total(value: string): void`
-
+set total(value: string): Сеттер для обновления текста в элементе messageElement. Он устанавливает текстовое содержимое, информируя пользователя о том, какая сумма была списана, формируя строку вида Списано {value} синапсов.
 ```

@@ -1,7 +1,7 @@
-export interface IApi {
-	getProductItem: (id: string) => Promise<ICard>;
-	getProductList: () => Promise<ICard[]>;
-	orderItems(order: IOrderData): Promise<IOrderResults>;
+export interface IApiModel {
+	fetchProductDetails: (id: string) => Promise<ICard>;
+	fetchAllProducts: () => Promise<ICard[]>;
+	placeOrder: (order: IOrderData) => Promise<IOrderResults>;
 }
 
 export interface IOrderData {
@@ -18,9 +18,10 @@ export interface IOrderResults {
 	total: number;
 }
 
-export interface IBasket {
-	items: ICard[];
+export class IBasket {
+	items: ICard[] = [];
 	total: number | null;
+	isEmpty: boolean;
 }
 
 export interface IModal {
@@ -30,14 +31,14 @@ export interface IModal {
 export interface ICard {
 	id: string;
 	title: string;
-	price: number | null;
 	description: string;
+	price: number | null;
 	image: string;
 	category: string;
 	button: string;
 }
 
-export interface IForm {
+export interface IBaseForm {
 	valid: boolean;
 	errors: string[];
 }

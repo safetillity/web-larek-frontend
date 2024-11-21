@@ -1,141 +1,120 @@
 import './scss/styles.scss';
 import { AppData } from './components/model/appData';
-import { BasketCard, Card } from './components/view/card';
+import { BasketItem, Card } from './components/view/card';
 import { ApiModel } from './components/model/apiModel';
 import { Page } from './components/view/page';
 import { EventEmitter } from './components/base/events';
 import { Basket } from './components/view/basket';
 import { Modal } from './components/view/modal';
-import { OrderForm, ContactsForm } from './components/view/forms';
+import { ContactForm } from './components/view/forms/contactForm';
+import { PaymentForm } from './components/view/forms/paymentForm';
 import { Success } from './components/view/success';
 import { ICard, IOrderData, API_URL, CDN_URL } from './types/index';
 import { cloneTemplate, ensureElement } from './types/fns';
 
+const templates = {
+	itemCatalog: ensureElement<HTMLTemplateElement>('#card-catalog'),
+	cardPreview: ensureElement<HTMLTemplateElement>('#card-preview'),
+	cardBasket: ensureElement<HTMLTemplateElement>('#card-basket'),
+	basket: ensureElement<HTMLTemplateElement>('#basket'),
+	payment: ensureElement<HTMLTemplateElement>('#order'),
+	contacts: ensureElement<HTMLTemplateElement>('#contacts'),
+	success: ensureElement<HTMLTemplateElement>('#success'),
+	modal: ensureElement<HTMLElement>('#modal-container'),
+};
+
 const events = new EventEmitter();
 const api = new ApiModel(CDN_URL, API_URL);
-
 const appData = new AppData(events);
-
-const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
-const cardPreviewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
-const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
-const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
-const paymentTemplate = ensureElement<HTMLTemplateElement>('#order');
-const contacsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
-const successTemplate = ensureElement<HTMLTemplateElement>('#success');
-
-const modalWindow = ensureElement<HTMLElement>('#modal-container');
-const pageBody = document.body;
-
-const page = new Page(pageBody, events);
-const modal = new Modal(modalWindow, events);
-
-const basket = new Basket(cloneTemplate(basketTemplate), events);
-const orderForm = new OrderForm(cloneTemplate(paymentTemplate), events);
-const contactsForm = new ContactsForm(cloneTemplate(contacsTemplate), events);
+const modal = new Modal(templates.modal, events);
+const page = new Page(document.body, events);
+const basket = new Basket(cloneTemplate(templates.basket), events);
+const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events);
+const contactForm = new ContactForm(cloneTemplate(templates.contacts), events);
 
 api
-	.getProductList()
-	.then(appData.setCatalog.bind(appData))
-	.catch((err) => {
-		console.error(err);
-	});
+	.fetchAllProducts()
+	.then((products) => appData.updateCatalog(products))
+	.catch(console.error);
 
-// Инициализация или изменение элементов в каталоге
-events.on('cards:changed', () => {
+events.on('catalog:updated', () => {
+	page.catalog = appData.itemCatalog.map((item) =>
+		new Card(cloneTemplate(templates.itemCatalog), {
+			onClick: () => events.emit('card:selected', item),
+		}).renderCard(item)
+	);
 	page.counter = appData.basket.length;
-	page.catalog = appData.catalog.map((item) => {
-		const card = new Card(cloneTemplate(cardCatalogTemplate), {
-			onClick: () => {
-				events.emit('card:selected', item);
-			},
-		});
-		return card.render(item);
-	});
 });
 
-events.on('card:selected', (item: ICard) => {
-	appData.setPreview(item);
-});
+events.on('card:selected', (item: ICard) => appData.setPreviewCard(item));
 
-events.on('preview:changed', (item: ICard) => {
-	const card = new Card(cloneTemplate(cardPreviewTemplate), {
+events.on('preview:updated', (item: ICard) => {
+	const card = new Card(cloneTemplate(templates.cardPreview), {
 		onClick: () => {
 			events.emit('card:basket', item);
-			events.emit('preview:changed', item);
+			events.emit('preview:updated', item);
 			modal.close();
 		},
 	});
 	modal.render({
-		content: card.render({
-			id: item.id,
-			title: item.title,
-			image: item.image,
-			description: item.description,
-			price: item.price,
-			category: item.category,
-			button: appData.getButtonStatus(item),
+		content: card.renderCard({
+			...item,
+			button: appData.getActionLabel(item),
 		}),
 	});
 });
 
-events.on('card:basket', (item: ICard) => {
-	appData.toggleBasketCard(item);
-});
+events.on('card:basket', (item: ICard) => appData.toggleBasketItem(item));
 
-events.on('basket:open', () => {
-	modal.render({
-		content: basket.render(),
-	});
+events.on('basket:show', () => {
+	modal.render({ content: basket.render() });
 });
 
 events.on('basket:changed', () => {
+	basket.total = appData.countBasketTotal();
 	page.counter = appData.basket.length;
-	basket.total = appData.getBasketTotal();
-	basket.items = appData.basket.map((basketCard) => {
-		const newBasketCard = new BasketCard(cloneTemplate(cardBasketTemplate), {
-			onClick: () => {
-				appData.deleteCardFromBasket(basketCard);
-			},
-		});
-		newBasketCard.index = appData.getCardIndex(basketCard);
-		return newBasketCard.render({
-			title: basketCard.title,
-			price: basketCard.price,
-		});
-	});
+	basket.items = appData.basket.map((basketItem) =>
+		new BasketItem(cloneTemplate(templates.cardBasket), {
+			onClick: () => appData.removeFromBasket(basketItem),
+		}).renderCard({
+			title: basketItem.title,
+			price: basketItem.price,
+		})
+	);
 });
 
 events.on('order:open', () => {
-	orderForm.clearPayment();
+	paymentForm.clearPaymentHighlight();
 	modal.render({
-		content: orderForm.render({
-			address: '',
-			valid: false,
-			errors: [],
-		}),
+		content: paymentForm.renderForm({ address: '', valid: false, errors: [] }),
 	});
 });
 
 events.on(
 	/^order\..*:changed/,
-	(data: {
+	({
+		field,
+		value,
+	}: {
 		field: keyof Pick<IOrderData, 'address' | 'phone' | 'email'>;
 		value: string;
 	}) => {
-		appData.setOrderField(data.field, data.value);
+		appData.updateOrderField(field, value);
 	}
 );
 
-events.on('order:changed', (data: { payment: string; button: HTMLElement }) => {
-	orderForm.togglePayment(data.button);
-	appData.setOrderPayment(data.payment);
-	appData.validateOrder();
-});
+events.on(
+	'order:changed',
+	({ payment, button }: { payment: string; button: HTMLElement }) => {
+		paymentForm.highlightPaymentButton(button);
+		appData.updateOrderField('payment', payment);
+		appData.validateOrder();
+	}
+);
 
 events.on('order:submit', () => {
 	modal.render({
-		content: contactsForm.render({
+		content: contactForm.renderForm({
 			phone: '',
 			email: '',
 			valid: false,
@@ -145,7 +124,7 @@ events.on('order:submit', () => {
 });
 
 events.on('contacts:submit', () => {
-	appData.setBasketToOrder(); 
+	appData.syncBasketWithOrder();
 
 	if (appData.order.total <= 0) {
 		console.error('Сумма заказа должна быть больше нуля');
@@ -153,15 +132,15 @@ events.on('contacts:submit', () => {
 	}
 
 	api
-		.orderItems(appData.order)
+		.placeOrder(appData.order)
 		.then((result) => {
-			const successWindow = new Success(cloneTemplate(successTemplate), {
+			const successWindow = new Success(cloneTemplate(templates.success), {
 				onClick: () => {
 					modal.close();
 				},
 			});
-			appData.clearBasket();
-			appData.clearOrder();
+			appData.resetBasket();
+			appData.resetOrder();
 
 			modal.render({ content: successWindow.render({ total: result.total }) });
 		})
@@ -169,22 +148,14 @@ events.on('contacts:submit', () => {
 			console.error(`Ошибка выполнения заказа ${err}`);
 		});
 });
-events.on('formErrors:changed', (errors: Partial<IOrderData>) => {
+
+events.on('validationErrors:updated', (errors: Partial<IOrderData>) => {
 	const { email, phone, address, payment } = errors;
-	orderForm.valid = !payment && !address;
-	orderForm.errors = Object.values({ payment, address })
-		.filter((i) => !!i)
-		.join('; ');
-	contactsForm.valid = !email && !phone;
-	contactsForm.errors = Object.values({ email, phone })
-		.filter((i) => !!i)
-		.join('; ');
+	contactForm.isValid = !email && !phone;
+	contactForm.errorMessage = [email, phone].filter(Boolean).join('; ');
+	paymentForm.isValid = !payment && !address;
+	paymentForm.errorMessage = [payment, address].filter(Boolean).join('; ');
 });
 
-events.on('modal:open', () => {
-	page.locked = true;
-});
-
-events.on('modal:close', () => {
-	page.locked = false;
-});
+events.on('modal:opened', () => (page.locked = true));
+events.on('modal:closed', () => (page.locked = false));

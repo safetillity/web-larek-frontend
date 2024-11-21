@@ -1,31 +1,62 @@
-import { ICard, IOrderResults, IApi, IOrderData } from '../../types/index';
+import { ICard, IOrderResults, IApiModel, IOrderData } from '../../types/index';
 import { Api, ApiListResponse } from '../base/api';
 
-export class ApiModel extends Api implements IApi {
+export class ApiModel extends Api implements IApiModel {
 	readonly cdn: string;
 
-	constructor(cdn: string, baseUrl: string, options?: RequestInit) {
-		super(baseUrl, options);
+	constructor(
+		cdn: string,
+		serviceBaseUrl: string,
+		requestOptions?: RequestInit
+	) {
+		super(serviceBaseUrl, requestOptions);
 		this.cdn = cdn;
 	}
 
-	getProductItem(id: string): Promise<ICard> {
-		return this.get(`/product/${id}`).then((item: ICard) => ({
-			...item,
-			image: this.cdn + item.image,
+	private makeApiCall<T>(
+		endpoint: string,
+		method: 'GET' | 'POST',
+		payload?: any
+	): Promise<T> {
+		const options: RequestInit = {
+			method,
+			headers: { 'Content-Type': 'application/json' },
+			body: payload ? JSON.stringify(payload) : undefined,
+		};
+
+		return fetch(`${this.baseUrl}${endpoint}`, options).then((response) => {
+			if (!response.ok) {
+				throw new Error(
+					`API call failed with status ${response.status}: ${response.statusText}`
+				);
+			}
+			return response.json();
+		});
+	}
+
+	async fetchProductDetails(productId: string): Promise<ICard> {
+		const product = await this.makeApiCall<ICard>(
+			`/product/${productId}`,
+			'GET'
+		);
+		return {
+			...product,
+			image: `${this.cdn}${product.image}`,
+		};
+	}
+
+	async fetchAllProducts(): Promise<ICard[]> {
+		const response = await this.makeApiCall<ApiListResponse<ICard>>(
+			`/product`,
+			'GET'
+		);
+		return response.items.map((product) => ({
+			...product,
+			image: `${this.cdn}${product.image}`,
 		}));
 	}
 
-	getProductList(): Promise<ICard[]> {
-		return this.get(`/product`).then((data: ApiListResponse<ICard>) =>
-			data.items.map((item) => ({
-				...item,
-				image: this.cdn + item.image,
-			}))
-		);
-	}
-
-	orderItems(order: IOrderData): Promise<IOrderResults> {
-		return this.post(`/order`, order).then((data: IOrderResults) => data);
+	async placeOrder(orderData: IOrderData): Promise<IOrderResults> {
+		return this.makeApiCall<IOrderResults>(`/order`, 'POST', orderData);
 	}
 }

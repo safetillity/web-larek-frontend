@@ -1,42 +1,53 @@
 export abstract class Component<T> {
-	protected constructor(protected readonly container: HTMLElement) {}
+	constructor(protected readonly container: HTMLElement) {}
 
-	toggleClass(element: HTMLElement, className: string, force?: boolean) {
-		element.classList.toggle(className, force);
-	}
-
-	protected setText(element: HTMLElement, value: unknown) {
-		if (element) {
-			element.textContent = String(value);
+	updateClass(element: HTMLElement, className: string, add: boolean) {
+		if (add) {
+			element.classList.add(className);
+		} else {
+			element.classList.remove(className);
 		}
 	}
 
-	setDisabled(element: HTMLElement, state: boolean) {
-		if (element) {
-			if (state) element.setAttribute('disabled', 'disabled');
-			else element.removeAttribute('disabled');
+	updateText(target: HTMLElement, content: unknown): void {
+		if (target) {
+			target.textContent = String(content);
 		}
 	}
 
-	protected setHidden(element: HTMLElement) {
-		element.style.display = 'none';
+	setElementState(target: HTMLElement, isDisabled: boolean): void {
+		if (target) {
+			isDisabled
+				? target.setAttribute('disabled', 'true')
+				: target.removeAttribute('disabled');
+		}
 	}
 
-	protected setVisible(element: HTMLElement) {
-		element.style.removeProperty('display');
+	hideElement(target: HTMLElement): void {
+		target.style.display = 'none';
 	}
 
-	protected setImage(element: HTMLImageElement, src: string, alt?: string) {
-		if (element) {
-			element.src = src;
-			if (alt) {
-				element.alt = alt;
+	showElement(target: HTMLElement): void {
+		target.style.display = '';
+	}
+
+	updateImage(
+		imageElement: HTMLImageElement,
+		source: string,
+		alternativeText?: string
+	): void {
+		if (imageElement) {
+			imageElement.src = source;
+			if (alternativeText) {
+				imageElement.alt = alternativeText;
 			}
 		}
 	}
 
-	render(data?: Partial<T>): HTMLElement {
-		Object.assign(this as object, data ?? {});
+	render(properties?: Partial<T>): HTMLElement {
+		if (properties) {
+			Object.assign(this, properties);
+		}
 		return this.container;
 	}
 }

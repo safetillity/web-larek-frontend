@@ -4,39 +4,48 @@ import { IEvents } from '../base/events';
 import { ensureElement, createElement } from '../../types/fns';
 
 export class Basket extends Component<IBasket> {
-	protected listEl: HTMLElement;
-	protected sumEl: HTMLElement;
-	protected buttonEl: HTMLElement;
-
+	protected itemList: HTMLElement;
+	protected totalAmount: HTMLElement;
+	protected actionButton: HTMLElement;
 	constructor(container: HTMLElement, protected events: IEvents) {
 		super(container);
 
-		this.listEl = ensureElement<HTMLElement>('.basket__list', this.container);
-		this.sumEl = this.container.querySelector('.basket__price');
-		this.buttonEl = this.container.querySelector('.basket__button');
+		this.itemList = ensureElement<HTMLElement>('.basket__list', this.container);
+		this.totalAmount = this.container.querySelector('.basket__price');
+		this.actionButton = this.container.querySelector('.basket__button');
 
-		if (this.buttonEl) {
-			this.buttonEl.addEventListener('click', () => {
-				events.emit('order:open');
-			});
-		}
+		this.setupActionButton();
+		this.clearBasket();
+	}
 
-		this.items = [];
+	private setupActionButton(): void {
+		this.actionButton.addEventListener('click', () => {
+			this.events.emit('order:open');
+		});
 	}
 
 	set items(items: HTMLElement[]) {
 		if (items.length) {
-			this.listEl.replaceChildren(...items);
-			this.setDisabled(this.buttonEl, false);
+			this.itemList.replaceChildren(...items);
+			this.setElementState(this.actionButton, false);
 		} else {
-			this.listEl.replaceChildren(
-				createElement('p', { textContent: 'Товары еще не добавлены в корзину' })
-			);
-			this.setDisabled(this.buttonEl, true);
+			this.displayEmptyMessage();
 		}
 	}
 
+	private displayEmptyMessage(): void {
+		this.setElementState(this.actionButton, true);
+		this.itemList.replaceChildren(
+			createElement('p', { textContent: 'Товары еще не добавлены в корзину' })
+		);
+	}
+
+	public clearBasket(): void {
+		this.items = [];
+		this.displayEmptyMessage();
+	}
+
 	set total(total: number) {
-		this.setText(this.sumEl, `${total} синапсов`);
+		this.updateText(this.totalAmount, `${total} синапсов`);
 	}
 }

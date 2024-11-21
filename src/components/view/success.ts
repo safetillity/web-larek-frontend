@@ -3,27 +3,33 @@ import { Component } from '../base/component';
 import { ensureElement } from '../../types/fns';
 
 export class Success extends Component<ISuccess> {
-	protected closeEl: HTMLElement;
-	protected descriptionEl: HTMLElement;
+	protected closeButton: HTMLElement;
+	protected messageElement: HTMLElement;
 
 	constructor(container: HTMLElement, actions: ISuccessActions) {
 		super(container);
+		this.initializeElements();
+		this.bindEventHandlers(actions);
+	}
 
-		this.closeEl = ensureElement<HTMLElement>(
+	private initializeElements(): void {
+		this.closeButton = ensureElement<HTMLElement>(
 			'.order-success__close',
 			this.container
 		);
-		this.descriptionEl = ensureElement<HTMLElement>(
+		this.messageElement = ensureElement<HTMLElement>(
 			'.order-success__description',
 			this.container
 		);
+	}
 
+	private bindEventHandlers(actions?: ISuccessActions): void {
 		if (actions?.onClick) {
-			this.closeEl.addEventListener('click', actions.onClick);
+			this.closeButton.addEventListener('click', actions.onClick);
 		}
 	}
 
 	set total(value: string) {
-		this.descriptionEl.textContent = `Списано ${value} синапсов`;
+		this.messageElement.textContent = `Списано ${value} синапсов`;
 	}
 }

@@ -41,5 +41,4 @@ export class Api {
 			body: JSON.stringify(data),
 		}).then(this.handleResponse);
 	}
-	
 }
