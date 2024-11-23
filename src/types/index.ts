@@ -30,8 +30,7 @@ export interface IModal {
 	content: HTMLElement;
 }
 
-
-export interface ICard  {
+export interface ICard {
 	title: string;
 	price: number | null;
 	id: string;
@@ -41,8 +40,6 @@ export interface ICard  {
 	button: string;
 	index: number;
 }
-
-
 
 export interface IBaseForm {
 	valid: boolean;

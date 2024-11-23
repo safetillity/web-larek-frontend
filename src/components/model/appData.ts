@@ -105,8 +105,7 @@ export class AppData {
 	updateOrderField(field: keyof TOrderFormData, value: string) {
 		this.order[field] = value;
 		this.notify('order:updated', { field, value });
-			this.validateOrder();
-
+		this.validateOrder();
 	}
 
 	validateOrder() {

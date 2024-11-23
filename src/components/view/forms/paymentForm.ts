@@ -4,9 +4,9 @@ import { BaseForm } from './baseForm';
 import { ensureElement } from '../../../types/fns';
 
 export class PaymentForm extends BaseForm<TOrderPayment> {
-	 addressInput: HTMLInputElement;
+	addressInput: HTMLInputElement;
 	cashButton: HTMLButtonElement;
-	 onlineButton: HTMLButtonElement;
+	onlineButton: HTMLButtonElement;
 
 	constructor(formElement: HTMLFormElement, events: IEvents) {
 		super(formElement, events);
