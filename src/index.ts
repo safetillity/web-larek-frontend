@@ -1,6 +1,6 @@
 import './scss/styles.scss';
 import { AppData } from './components/model/appData';
-import { BasketItem, Card } from './components/view/card';
+import { Card } from './components/view/card';
 import { ApiModel } from './components/model/apiModel';
 import { Page } from './components/view/page';
 import { EventEmitter } from './components/base/events';
@@ -31,40 +31,47 @@ const page = new Page(document.body, events);
 const basket = new Basket(cloneTemplate(templates.basket), events);
 const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events);
 const contactForm = new ContactForm(cloneTemplate(templates.contacts), events);
+const successWindow = new Success(cloneTemplate(templates.success), {
+	onClick: () => {
+		modal.close();
+	},
+});
 
 api
 	.fetchAllProducts()
-	.then((products) => appData.updateCatalog(products))
+	.then((products) => {
+		appData.updateCatalog(products);
+		events.emit('catalog:updated');
+	})
 	.catch(console.error);
 
-events.on('catalog:updated', () => {
-	page.catalog = appData.itemCatalog.map((item) =>
-		new Card(cloneTemplate(templates.itemCatalog), {
-			onClick: () => events.emit('card:selected', item),
-		}).renderCard(item)
-	);
-	page.counter = appData.basket.length;
+events.on('card:selected', (item: ICard) => {
+	appData.setPreviewCard(item);
 });
 
-events.on('card:selected', (item: ICard) => appData.setPreviewCard(item));
-
 events.on('preview:updated', (item: ICard) => {
-	const card = new Card(cloneTemplate(templates.cardPreview), {
-		onClick: () => {
-			events.emit('card:basket', item);
-			events.emit('preview:updated', item);
-			modal.close();
+	const card = new Card(
+		cloneTemplate(templates.cardPreview),
+		{
+			onClick: () => {
+				events.emit('card:basket', item);
+				modal.close();
+			},
 		},
-	});
+		appData
+	);
 	modal.render({
-		content: card.renderCard({
+		content: card.render({
 			...item,
-			button: appData.getActionLabel(item),
+			button: card.updateActionLabel(item),
 		}),
 	});
 });
 
-events.on('card:basket', (item: ICard) => appData.toggleBasketItem(item));
+events.on('card:basket', (item: ICard) => {
+	appData.toggleBasketItem(item);
+	events.emit('basket:changed');
+});
 
 events.on('basket:show', () => {
 	modal.render({ content: basket.render() });
@@ -74,16 +81,26 @@ events.on('basket:changed', () => {
 	basket.total = appData.countBasketTotal();
 	page.counter = appData.basket.length;
 	basket.items = appData.basket.map((basketItem) =>
-		new BasketItem(cloneTemplate(templates.cardBasket), {
-			onClick: () => appData.removeFromBasket(basketItem),
-		}).renderCard({
+		new Card(
+			cloneTemplate(templates.cardBasket),
+			{
+				onClick: () => {
+					appData.removeFromBasket(basketItem);
+					events.emit('basket:changed');
+				},
+			},
+			appData,
+			true
+		).render({
 			title: basketItem.title,
 			price: basketItem.price,
+			index: appData.getCardIndex(basketItem),
 		})
 	);
 });
 
 events.on('order:open', () => {
+	appData.validateOrder();
 	paymentForm.clearPaymentHighlight();
 	modal.render({
 		content: paymentForm.renderForm({ address: '', valid: false, errors: [] }),
@@ -108,7 +125,6 @@ events.on(
 	({ payment, button }: { payment: string; button: HTMLElement }) => {
 		paymentForm.highlightPaymentButton(button);
 		appData.updateOrderField('payment', payment);
-		appData.validateOrder();
 	}
 );
 
@@ -124,29 +140,29 @@ events.on('order:submit', () => {
 });
 
 events.on('contacts:submit', () => {
-	appData.syncBasketWithOrder();
+	api.placeOrder(appData.createOrderPayload()).then((result) => {
+		appData.resetOrder();
+		appData.resetBasket();
+		page.counter = appData.countBasketItems().length;
+		modal.render({ content: successWindow.render({ total: result.total }) });
+	});
+});
 
-	if (appData.order.total <= 0) {
-		console.error('Сумма заказа должна быть больше нуля');
-		return;
-	}
-
-	api
-		.placeOrder(appData.order)
-		.then((result) => {
-			const successWindow = new Success(cloneTemplate(templates.success), {
-				onClick: () => {
-					modal.close();
-				},
-			});
-			appData.resetBasket();
-			appData.resetOrder();
-
-			modal.render({ content: successWindow.render({ total: result.total }) });
-		})
-		.catch((err) => {
-			console.error(`Ошибка выполнения заказа ${err}`);
+events.on('catalog:updated', () => {
+	page.catalog = appData.itemCatalog.map((item) => {
+		const card = new Card(
+			cloneTemplate(templates.itemCatalog),
+			{
+				onClick: () => events.emit('card:selected', item),
+			},
+			appData
+		);
+		return card.render({
+			...item,
+			button: card.updateActionLabel(item),
 		});
+	});
+	page.counter = appData.basket.length;
 });
 
 events.on('validationErrors:updated', (errors: Partial<IOrderData>) => {

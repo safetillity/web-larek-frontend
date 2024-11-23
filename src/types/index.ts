@@ -5,14 +5,16 @@ export interface IApiModel {
 }
 
 export interface IOrderData {
-	total: number;
 	payment: string;
 	email: string;
 	phone: string;
 	address: string;
-	items: string[];
 }
 
+export interface IOrderList extends IOrderData {
+	items: string[];
+	total: number | null;
+}
 export interface IOrderResults {
 	id: string;
 	total: number;
@@ -28,15 +30,19 @@ export interface IModal {
 	content: HTMLElement;
 }
 
-export interface ICard {
-	id: string;
+
+export interface ICard  {
 	title: string;
-	description: string;
 	price: number | null;
+	id: string;
+	description: string | null;
 	image: string;
 	category: string;
 	button: string;
+	index: number;
 }
+
+
 
 export interface IBaseForm {
 	valid: boolean;

@@ -4,9 +4,9 @@ import { BaseForm } from './baseForm';
 import { ensureElement } from '../../../types/fns';
 
 export class PaymentForm extends BaseForm<TOrderPayment> {
-	protected addressInput: HTMLInputElement;
-	protected cashButton: HTMLButtonElement;
-	protected onlineButton: HTMLButtonElement;
+	 addressInput: HTMLInputElement;
+	cashButton: HTMLButtonElement;
+	 onlineButton: HTMLButtonElement;
 
 	constructor(formElement: HTMLFormElement, events: IEvents) {
 		super(formElement, events);
@@ -26,7 +26,7 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 
 		if (this.onlineButton) {
 			this.onlineButton.addEventListener('click', () => {
-				events.emit(`order:changed`, {
+				events.emit('order:changed', {
 					payment: this.onlineButton.name,
 					button: this.onlineButton,
 				});
@@ -34,7 +34,7 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 		}
 		if (this.cashButton) {
 			this.cashButton.addEventListener('click', () => {
-				events.emit(`order:changed`, {
+				events.emit('order:changed', {
 					payment: this.cashButton.name,
 					button: this.cashButton,
 				});

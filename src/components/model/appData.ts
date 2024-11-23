@@ -13,21 +13,27 @@ export class AppData {
 		email: '',
 		phone: '',
 		payment: '',
-		total: 0,
 		address: '',
-		items: [],
 	};
 	currentPreview: string | null = null;
 	validationErrors: ValidationErrors = {};
 
 	constructor(protected events: IEvents) {}
 
+	createOrderPayload(): IOrderData & { total: number; items: string[] } {
+		return {
+			...this.order,
+			total: this.countBasketTotal(),
+			items: this.countBasketItems(),
+		};
+	}
+
 	notify(eventType: string, data?: object) {
 		this.events.emit(eventType, data ?? {});
 	}
 
 	updateCatalog(products: ICard[]) {
-		this.itemCatalog = [...this.itemCatalog, ...products];
+		this.itemCatalog = [...products];
 		this.notify('catalog:updated', { catalog: this.itemCatalog });
 	}
 
@@ -36,67 +42,71 @@ export class AppData {
 		this.notify('preview:updated', card);
 	}
 
-	getActionLabel(card: ICard) {
-		if (card.price !== null) {
-			return this.isInCart(card) ? 'Добавить в корзину' : 'Убрать из корзины';
-		}
-		return 'Не для продажи';
-	}
-
 	toggleBasketItem(card: ICard) {
-		this.isInCart(card) ? this.removeFromBasket(card) : this.addToCart(card);
+		this.isInBasket(card)
+			? this.removeFromBasket(card)
+			: this.addToBasket(card);
 	}
 
-	addToCart(card: ICard) {
+	addToBasket(card: ICard) {
 		this.basket = [...this.basket, card];
-		this.notify('basket:changed');
+		this.notify('basket:changed', {
+			basketItems: this.basket,
+			total: this.countBasketTotal(),
+		});
 	}
 
 	removeFromBasket(card: ICard) {
 		this.basket = this.basket.filter((item) => item.id !== card.id);
-		this.notify('basket:changed');
+		this.notify('basket:changed', {
+			basketItems: this.basket,
+			total: this.countBasketTotal(),
+		});
+	}
+
+	resetBasket() {
+		this.basket = [];
+		this.notify('basket:changed', {
+			basketItems: this.basket,
+			total: 0,
+		});
 	}
 
 	getCardIndex(item: ICard) {
 		return Number(this.basket.indexOf(item)) + 1;
 	}
 
-	isInCart(card: ICard): boolean {
+	isInBasket(card: ICard): boolean {
 		return this.basket.some((item) => item.id === card.id);
-	}
-
-	resetBasket() {
-		this.basket = [];
-		this.notify('basket:cleared');
 	}
 
 	resetOrder() {
 		this.order = {
-			total: 0,
-			items: [],
 			email: '',
 			phone: '',
 			address: '',
 			payment: '',
 		};
 		this.events.emit('basket:changed');
-	}
-
-	syncBasketWithOrder() {
-		this.order.total = this.countBasketTotal();
-		this.order.items = this.basket.map((item) => item.id);
+		this.validateOrder();
 	}
 
 	countBasketTotal(): number {
-		return this.basket.reduce(
-			(sum, card) => sum + (Number(card.price) || 0),
-			0
-		);
+		const total = this.basket.reduce((sum, card) => {
+			return sum + (Number(card.price) || 0);
+		}, 0);
+		return total;
+	}
+
+	countBasketItems(): string[] {
+		return this.basket.map((item) => item.id);
 	}
 
 	updateOrderField(field: keyof TOrderFormData, value: string) {
 		this.order[field] = value;
-		this.validateOrder();
+		this.notify('order:updated', { field, value });
+			this.validateOrder();
+
 	}
 
 	validateOrder() {

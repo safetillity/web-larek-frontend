@@ -1,31 +1,48 @@
 import { ICardActions, ICard, categories } from '../../types/index';
 import { Component } from '../base/component';
 import { ensureElement, formatNumber } from '../../types/fns';
+import { AppData } from '../model/appData';
 
 export class Card extends Component<ICard> {
+	protected appData: AppData;
 	protected titleElement: HTMLElement;
+	protected priceLabel: HTMLSpanElement;
 	protected imageElement: HTMLImageElement | null;
 	protected actionButton: HTMLButtonElement | null;
 	protected categoryLabel: HTMLSpanElement | null;
-	protected priceLabel: HTMLSpanElement;
 	protected descriptionElement: HTMLElement | null;
+	protected indexElement: HTMLElement;
+	protected removeButton: HTMLButtonElement;
 
-	constructor(container: HTMLElement, handlers?: ICardActions) {
+	constructor(
+		container: HTMLElement,
+		handlers?: ICardActions,
+		appData?: AppData,
+		isInBasket = false
+	) {
 		super(container);
-		this.initializeElements(container);
-		this.bindEventHandlers(handlers);
-	}
+		this.appData = appData;
 
-	private initializeElements(container: HTMLElement): void {
 		this.titleElement = ensureElement<HTMLElement>('.card__title', container);
 		this.priceLabel = ensureElement<HTMLSpanElement>('.card__price', container);
-		this.categoryLabel =
-			container.querySelector<HTMLSpanElement>('.card__category');
-		this.actionButton =
-			container.querySelector<HTMLButtonElement>('.card__button');
-		this.imageElement =
-			container.querySelector<HTMLImageElement>('.card__image');
+		this.categoryLabel = container.querySelector('.card__category');
+		this.actionButton = container.querySelector('.card__button');
+		this.imageElement = container.querySelector('.card__image');
 		this.descriptionElement = container.querySelector('.card__text');
+
+		if (isInBasket) {
+			this.indexElement = ensureElement<HTMLElement>(
+				'.basket__item-index',
+				container
+			);
+			this.removeButton = ensureElement<HTMLButtonElement>(
+				'.basket__item-delete',
+				container
+			);
+			this.bindRemoveButtonEvent(handlers);
+		} else {
+			this.bindEventHandlers(handlers);
+		}
 	}
 
 	private bindEventHandlers(handlers?: ICardActions): void {
@@ -35,53 +52,62 @@ export class Card extends Component<ICard> {
 		}
 	}
 
-	set productId(id: string) {
+	private bindRemoveButtonEvent(handlers?: ICardActions): void {
+		if (handlers?.onClick) {
+			this.removeButton.addEventListener('click', handlers.onClick);
+		}
+	}
+
+	isInBasket(): boolean {
+		return this.appData.basket.some(
+			(item) => item.id === this.container.dataset.id
+		);
+	}
+
+	set button(text: string) {
+		if (this.actionButton) {
+			this.actionButton.textContent = text;
+		}
+	}
+
+	updateActionLabel(card: ICard): string {
+		if (card.price !== null) {
+			return this.isInBasket() ? 'Уже в корзине' : 'В корзину';
+		}
+		return 'Бесценно';
+	}
+
+	set id(id: string) {
 		this.container.dataset.id = id;
 	}
 
-	get productId(): string {
-		return this.container.dataset.id || '';
-	}
-
-	set productTitle(title: string) {
+	set title(title: string) {
 		this.updateText(this.titleElement, title);
 	}
 
-	get productTitle(): string {
-		return this.titleElement.textContent || '';
-	}
-
-	set productDescription(description: string) {
+	set description(description: string) {
 		this.updateText(this.descriptionElement, description);
 	}
 
-	get productDescription(): string {
-		return this.descriptionElement?.textContent || '';
-	}
-
-	set productPrice(price: number | null) {
+	set price(price: number | null) {
 		if (price !== null) {
 			const formattedPrice =
 				price <= 4 ? price.toString() : formatNumber(price);
 			this.updateText(this.priceLabel, `${formattedPrice} синапсов`);
-			this.toggleButtonState(false);
+			this.setElementState(this.actionButton, this.isInBasket());
 		} else {
 			this.updateText(this.priceLabel, 'Бесценно');
-			this.toggleButtonState(true);
+			this.setElementState(this.actionButton, true);
 		}
 	}
 
-	get productPrice(): string {
-		return this.priceLabel.textContent || '';
-	}
-
-	set productImage(src: string) {
+	set image(src: string) {
 		if (this.imageElement) {
-			this.updateImage(this.imageElement, src, this.productTitle);
+			this.updateImage(this.imageElement, src, this.title);
 		}
 	}
 
-	set productCategory(category: string) {
+	set category(category: string) {
 		if (this.categoryLabel) {
 			this.updateText(this.categoryLabel, category);
 			const categoryClass = categories.get(category);
@@ -91,60 +117,9 @@ export class Card extends Component<ICard> {
 		}
 	}
 
-	get productCategory(): string {
-		return this.categoryLabel?.textContent || '';
-	}
-
-	set actionButtonText(text: string) {
-		if (this.actionButton) {
-			this.actionButton.textContent = text;
+	set index(index: number) {
+		if (this.indexElement) {
+			this.updateText(this.indexElement, index.toString());
 		}
-	}
-
-	protected toggleButtonState(disable: boolean): void {
-		if (this.actionButton) {
-			this.setElementState(this.actionButton, disable);
-		}
-	}
-
-	renderCard(properties?: Partial<ICard>): HTMLElement {
-		super.render(properties);
-		if (properties) {
-			this.productId = properties.id;
-			this.productTitle = properties.title;
-			this.productDescription = properties.description;
-			this.productImage = properties.image;
-			this.productPrice = properties.price;
-			this.productCategory = properties.category;
-		}
-		return this.container;
-	}
-}
-
-export class BasketItem extends Card {
-	protected indexElement: HTMLElement;
-	protected removeButton: HTMLButtonElement;
-
-	constructor(container: HTMLElement, handlers?: ICardActions) {
-		super(container, handlers);
-		this.indexElement = ensureElement<HTMLElement>(
-			'.basket__item-index',
-			container
-		);
-		this.removeButton = ensureElement<HTMLButtonElement>(
-			'.basket__item-delete',
-			container
-		);
-		this.bindRemoveButtonEvent(handlers);
-	}
-
-	private bindRemoveButtonEvent(handlers?: ICardActions): void {
-		if (handlers?.onClick) {
-			this.removeButton.addEventListener('click', handlers.onClick);
-		}
-	}
-
-	set itemIndex(index: number) {
-		this.updateText(this.indexElement, index.toString());
 	}
 }
