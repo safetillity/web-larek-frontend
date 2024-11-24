@@ -18,7 +18,7 @@ export class AppData {
 	currentPreview: string | null = null;
 	validationErrors: ValidationErrors = {};
 
-	constructor(protected events: IEvents) {}
+	constructor(public events: IEvents) {}
 
 	createOrderPayload(): IOrderData & { total: number; items: string[] } {
 		return {

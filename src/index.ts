@@ -11,6 +11,7 @@ import { PaymentForm } from './components/view/forms/paymentForm';
 import { Success } from './components/view/success';
 import { ICard, IOrderData, API_URL, CDN_URL } from './types/index';
 import { cloneTemplate, ensureElement } from './types/fns';
+import { OrderPresenter } from './components/base/orderPresenter';
 
 const templates = {
 	itemCatalog: ensureElement<HTMLTemplateElement>('#card-catalog'),
@@ -29,8 +30,9 @@ const appData = new AppData(events);
 const modal = new Modal(templates.modal, events);
 const page = new Page(document.body, events);
 const basket = new Basket(cloneTemplate(templates.basket), events);
-const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events);
+const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events );
 const contactForm = new ContactForm(cloneTemplate(templates.contacts), events);
+const orderPresenter = new OrderPresenter(appData, paymentForm);
 const successWindow = new Success(cloneTemplate(templates.success), {
 	onClick: () => {
 		modal.close();
@@ -123,7 +125,7 @@ events.on(
 events.on(
 	'order:changed',
 	({ payment, button }: { payment: string; button: HTMLElement }) => {
-		paymentForm.highlightPaymentButton(button);
+		orderPresenter.handleOrderChange({ payment, button });
 		appData.updateOrderField('payment', payment);
 	}
 );

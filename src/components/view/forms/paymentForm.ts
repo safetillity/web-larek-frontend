@@ -24,9 +24,10 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 			this.formElement
 		);
 
+
 		if (this.onlineButton) {
 			this.onlineButton.addEventListener('click', () => {
-				events.emit('order:changed', {
+				this.events.emit('order:changed', {
 					payment: this.onlineButton.name,
 					button: this.onlineButton,
 				});
@@ -34,7 +35,7 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 		}
 		if (this.cashButton) {
 			this.cashButton.addEventListener('click', () => {
-				events.emit('order:changed', {
+				this.events.emit('order:changed', {
 					payment: this.cashButton.name,
 					button: this.cashButton,
 				});
