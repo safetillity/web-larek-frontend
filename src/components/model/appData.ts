@@ -87,7 +87,6 @@ export class AppData {
 			address: '',
 			payment: '',
 		};
-		this.events.emit('basket:changed');
 		this.validateOrder();
 	}
 

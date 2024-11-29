@@ -1,6 +1,6 @@
+import { BaseForm } from './baseForm';
 import { IEvents } from '../../base/events';
 import { TOrderPayment } from '../../../types/index';
-import { BaseForm } from './baseForm';
 import { ensureElement } from '../../../types/fns';
 
 export class PaymentForm extends BaseForm<TOrderPayment> {
@@ -24,33 +24,40 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 			this.formElement
 		);
 
+		this.initPaymentButtons();
+	}
 
-		if (this.onlineButton) {
-			this.onlineButton.addEventListener('click', () => {
-				this.events.emit('order:changed', {
-					payment: this.onlineButton.name,
-					button: this.onlineButton,
-				});
+	private initPaymentButtons() {
+		const paymentButtons = [this.cashButton, this.onlineButton];
+		paymentButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				this.events.emit('order:paymentChanged', { payment: button.name });
 			});
-		}
-		if (this.cashButton) {
-			this.cashButton.addEventListener('click', () => {
-				this.events.emit('order:changed', {
-					payment: this.cashButton.name,
-					button: this.cashButton,
-				});
-			});
-		}
+		});
 	}
 
 	highlightPaymentButton(button: HTMLElement) {
 		this.clearPaymentHighlight();
-		this.updateClass(button, 'button_alt-active', true);
+		button.classList.add('button_alt-active');
 	}
 
+	setPaymentState(payment: string) {
+		this.clearPaymentHighlight();
+		const button = payment === 'cash' ? this.cashButton : this.onlineButton;
+		if (button) button.classList.add('button_alt-active');
+		
+	}
+
+	updatePaymentButtons(payment: string) {
+		this.clearPaymentHighlight(); 
+		const paymentButton =
+			payment === 'cash' ? this.cashButton : this.onlineButton;
+		paymentButton.classList.add('button_alt-active'); 
+	}
 	clearPaymentHighlight() {
-		this.updateClass(this.cashButton, 'button_alt-active', false);
-		this.updateClass(this.onlineButton, 'button_alt-active', false);
+		[this.cashButton, this.onlineButton].forEach((btn) =>
+			btn.classList.remove('button_alt-active')
+		);
 	}
 
 	set address(value: string) {

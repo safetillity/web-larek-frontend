@@ -11,7 +11,6 @@ import { PaymentForm } from './components/view/forms/paymentForm';
 import { Success } from './components/view/success';
 import { ICard, IOrderData, API_URL, CDN_URL } from './types/index';
 import { cloneTemplate, ensureElement } from './types/fns';
-import { OrderPresenter } from './components/base/orderPresenter';
 
 const templates = {
 	itemCatalog: ensureElement<HTMLTemplateElement>('#card-catalog'),
@@ -24,13 +23,35 @@ const templates = {
 	modal: ensureElement<HTMLElement>('#modal-container'),
 };
 
+class OrderPresenter {
+	constructor(private appData: AppData, private paymentForm: PaymentForm) {
+		this.init();
+	}
+
+	init() {
+		this.appData.events.on('order:updated', this.renderPayment.bind(this));
+	
+		this.appData.events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
+    this.appData.updateOrderField('payment', payment);
+});
+
+
+	}
+
+
+renderPayment() {
+        const { payment } = this.appData.order;
+        this.paymentForm.updatePaymentButtons(payment);
+    }
+	}
+
 const events = new EventEmitter();
 const api = new ApiModel(CDN_URL, API_URL);
 const appData = new AppData(events);
 const modal = new Modal(templates.modal, events);
 const page = new Page(document.body, events);
 const basket = new Basket(cloneTemplate(templates.basket), events);
-const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events );
+const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events);
 const contactForm = new ContactForm(cloneTemplate(templates.contacts), events);
 const orderPresenter = new OrderPresenter(appData, paymentForm);
 const successWindow = new Success(cloneTemplate(templates.success), {
@@ -72,7 +93,6 @@ events.on('preview:updated', (item: ICard) => {
 
 events.on('card:basket', (item: ICard) => {
 	appData.toggleBasketItem(item);
-	events.emit('basket:changed');
 });
 
 events.on('basket:show', () => {
@@ -88,7 +108,6 @@ events.on('basket:changed', () => {
 			{
 				onClick: () => {
 					appData.removeFromBasket(basketItem);
-					events.emit('basket:changed');
 				},
 			},
 			appData,
@@ -103,11 +122,17 @@ events.on('basket:changed', () => {
 
 events.on('order:open', () => {
 	appData.validateOrder();
-	paymentForm.clearPaymentHighlight();
+	paymentForm.updatePaymentButtons(appData.order.payment); 
 	modal.render({
-		content: paymentForm.renderForm({ address: '', valid: false, errors: [] }),
+		content: paymentForm.renderForm({
+			address: appData.order.address,
+			valid: appData.validateOrder(),
+			errors: Object.values(appData.validationErrors).filter(
+				(error): error is string => typeof error === 'string')
+		}),
 	});
 });
+
 
 events.on(
 	/^order\..*:changed/,
@@ -122,13 +147,16 @@ events.on(
 	}
 );
 
-events.on(
-	'order:changed',
-	({ payment, button }: { payment: string; button: HTMLElement }) => {
-		orderPresenter.handleOrderChange({ payment, button });
-		appData.updateOrderField('payment', payment);
-	}
-);
+
+events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
+    appData.updateOrderField('payment', payment);
+});
+
+
+
+events.on('order:updated', () => {
+	orderPresenter.renderPayment();
+});
 
 events.on('order:submit', () => {
 	modal.render({
@@ -164,7 +192,6 @@ events.on('catalog:updated', () => {
 			button: card.updateActionLabel(item),
 		});
 	});
-	page.counter = appData.basket.length;
 });
 
 events.on('validationErrors:updated', (errors: Partial<IOrderData>) => {

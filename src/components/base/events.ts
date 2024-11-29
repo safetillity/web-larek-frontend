@@ -56,16 +56,7 @@ export class EventEmitter implements IEvents {
 		this._events = new Map<string, Set<Subscriber>>();
 	}
 
-	/**
-	 * Return a function that triggers an event with a given name,
-	 * using the passed context as defaults for the event data.
-	 * The returned function takes an optional event object
-	 * and merges it with the context, then calls emit with the result.
-	 *
-	 * @param eventName the event name
-	 * @param context the default event data
-	 * @returns a function that triggers the event
-	 */
+
 	trigger<T extends object>(eventName: string, context?: Partial<T>) {
 		return (event: object = {}) => {
 			this.emit(eventName, {
