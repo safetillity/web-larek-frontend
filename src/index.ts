@@ -30,20 +30,20 @@ class OrderPresenter {
 
 	init() {
 		this.appData.events.on('order:updated', this.renderPayment.bind(this));
-	
-		this.appData.events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
-    this.appData.updateOrderField('payment', payment);
-});
 
-
+		this.appData.events.on(
+			'order:paymentChanged',
+			({ payment }: { payment: string }) => {
+				this.appData.updateOrderField('payment', payment);
+			}
+		);
 	}
 
-
-renderPayment() {
-        const { payment } = this.appData.order;
-        this.paymentForm.updatePaymentButtons(payment);
-    }
+	renderPayment() {
+		const { payment } = this.appData.order;
+		this.paymentForm.updatePaymentButtons(payment);
 	}
+}
 
 const events = new EventEmitter();
 const api = new ApiModel(CDN_URL, API_URL);
@@ -73,22 +73,23 @@ events.on('card:selected', (item: ICard) => {
 });
 
 events.on('preview:updated', (item: ICard) => {
-	const card = new Card(
-		cloneTemplate(templates.cardPreview),
-		{
-			onClick: () => {
-				events.emit('card:basket', item);
-				modal.close();
-			},
+	const card = new Card(cloneTemplate(templates.cardPreview), {
+		onClick: () => {
+			events.emit('card:basket', item);
+			modal.close();
 		},
-		
-	);
+	});
+
+	const buttonState = appData.updateButtonStatus(item);
+
 	modal.render({
 		content: card.render({
 			...item,
-			button: appData.updateButtonStatus(item),
+			button: buttonState.text,
 		}),
 	});
+
+	card.updateButtonState(buttonState);
 });
 
 events.on('card:basket', (item: ICard) => {
@@ -121,17 +122,17 @@ events.on('basket:changed', () => {
 
 events.on('order:open', () => {
 	appData.validateOrder();
-	paymentForm.updatePaymentButtons(appData.order.payment); 
+	paymentForm.updatePaymentButtons(appData.order.payment);
 	modal.render({
 		content: paymentForm.renderForm({
 			address: appData.order.address,
 			valid: appData.validateOrder(),
 			errors: Object.values(appData.validationErrors).filter(
-				(error): error is string => typeof error === 'string')
+				(error): error is string => typeof error === 'string'
+			),
 		}),
 	});
 });
-
 
 events.on(
 	/^order\..*:changed/,
@@ -146,12 +147,9 @@ events.on(
 	}
 );
 
-
 events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
-    appData.updateOrderField('payment', payment);
+	appData.updateOrderField('payment', payment);
 });
-
-
 
 events.on('order:updated', () => {
 	orderPresenter.renderPayment();
@@ -160,14 +158,13 @@ events.on('order:updated', () => {
 events.on('order:submit', () => {
 	modal.render({
 		content: contactForm.renderForm({
-			phone: appData.order.phone, 
+			phone: appData.order.phone,
 			email: appData.order.email,
 			valid: appData.validateOrder(),
 			errors: Object.values(appData.validationErrors),
 		}),
 	});
 });
-
 
 events.on('contacts:submit', () => {
 	api.placeOrder(appData.createOrderPayload()).then((result) => {
@@ -180,16 +177,21 @@ events.on('contacts:submit', () => {
 
 events.on('catalog:updated', () => {
 	page.catalog = appData.itemCatalog.map((item) => {
-		const card = new Card(
-			cloneTemplate(templates.itemCatalog),
-			{
-				onClick: () => events.emit('card:selected', item),
-			},
-		);
-		return card.render({
-			...item,
-			button: appData.updateButtonStatus(item),
+		const cardElement = cloneTemplate(templates.itemCatalog);
+		const card = new Card(cardElement, {
+			onClick: () => events.emit('card:selected', item),
 		});
+
+		const buttonState = appData.updateButtonStatus(item);
+
+		const renderedCard = card.render({
+			...item,
+			button: buttonState.text,
+		});
+
+		card.updateButtonState(buttonState);
+
+		return renderedCard;
 	});
 });
 

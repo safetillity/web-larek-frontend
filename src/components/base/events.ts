@@ -56,7 +56,6 @@ export class EventEmitter implements IEvents {
 		this._events = new Map<string, Set<Subscriber>>();
 	}
 
-
 	trigger<T extends object>(eventName: string, context?: Partial<T>) {
 		return (event: object = {}) => {
 			this.emit(eventName, {

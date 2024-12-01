@@ -1,4 +1,3 @@
-// Card.ts
 import { Component } from '../base/component';
 import { ensureElement } from '../../types/fns';
 import { ICardActions, ICard, categories } from '../../types/index';
@@ -55,7 +54,13 @@ export class Card extends Component<ICard> {
 		}
 	}
 
-	
+	updateButtonState({ text, disabled }: { text: string; disabled: boolean }) {
+		if (this.actionButton) {
+			this.updateText(this.actionButton, text);
+			this.setElementState(this.actionButton, disabled);
+		}
+	}
+
 	set id(id: string) {
 		this.container.dataset.id = id;
 	}
@@ -78,8 +83,6 @@ export class Card extends Component<ICard> {
 			this.setElementState(this.actionButton, true);
 		}
 	}
-
-
 
 	set image(src: string) {
 		if (this.imageElement) {

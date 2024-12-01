@@ -40,7 +40,7 @@ export interface ICard {
 	button: string;
 	index: number;
 	buttonDescription: string;
-	isInBasketStatus : boolean;
+	isInBasketStatus: boolean;
 }
 
 export interface IBaseForm {
@@ -78,8 +78,7 @@ export type TOrderChoice = 'онлайн' | '' | 'при получении';
 export type TOrderPayment = Pick<IOrderData, 'payment' | 'address'>;
 export type TOrderContacts = Pick<IOrderData, 'email' | 'phone'>;
 export type TOrderFormData = TOrderContacts & TOrderPayment;
-export type ValidationErrors = Partial<Record<keyof IOrderData, string>> ;
-
+export type ValidationErrors = Partial<Record<keyof IOrderData, string>>;
 
 export const API_URL = `https://larek-api.nomoreparties.co/api/weblarek`;
 export const CDN_URL = `https://larek-api.nomoreparties.co/content/weblarek`;

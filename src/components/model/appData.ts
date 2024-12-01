@@ -42,14 +42,14 @@ export class AppData {
 		this.notify('preview:updated', card);
 	}
 
-	updateButtonStatus(item: ICard) {
+	updateButtonStatus(item: ICard): { text: string; disabled: boolean } {
 		if (item.price === null) {
-			return 'Не для продажи';
+			return { text: 'Не для продажи', disabled: true };
 		}
 		if (!this.isInBasket(item)) {
-			return 'Добавить в корзину';
+			return { text: 'Добавить в корзину', disabled: false };
 		} else {
-			return 'Убрать из корзины';
+			return { text: 'Уже в корзине', disabled: true };
 		}
 	}
 
