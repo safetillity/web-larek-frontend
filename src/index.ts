@@ -160,13 +160,14 @@ events.on('order:updated', () => {
 events.on('order:submit', () => {
 	modal.render({
 		content: contactForm.renderForm({
-			phone: '',
-			email: '',
-			valid: false,
-			errors: [],
+			phone: appData.order.phone, 
+			email: appData.order.email,
+			valid: appData.validateOrder(),
+			errors: Object.values(appData.validationErrors),
 		}),
 	});
 });
+
 
 events.on('contacts:submit', () => {
 	api.placeOrder(appData.createOrderPayload()).then((result) => {
