@@ -81,12 +81,12 @@ events.on('preview:updated', (item: ICard) => {
 				modal.close();
 			},
 		},
-		appData
+		
 	);
 	modal.render({
 		content: card.render({
 			...item,
-			button: card.updateActionLabel(item),
+			button: appData.updateButtonStatus(item),
 		}),
 	});
 });
@@ -110,7 +110,6 @@ events.on('basket:changed', () => {
 					appData.removeFromBasket(basketItem);
 				},
 			},
-			appData,
 			true
 		).render({
 			title: basketItem.title,
@@ -185,11 +184,10 @@ events.on('catalog:updated', () => {
 			{
 				onClick: () => events.emit('card:selected', item),
 			},
-			appData
 		);
 		return card.render({
 			...item,
-			button: card.updateActionLabel(item),
+			button: appData.updateButtonStatus(item),
 		});
 	});
 });

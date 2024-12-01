@@ -3,10 +3,8 @@ import { Component } from '../base/component';
 import { ensureElement } from '../../types/fns';
 import { ICardActions, ICard, categories } from '../../types/index';
 import { formatNumber } from '../../types/fns';
-import { AppData } from '../model/appData';
 
 export class Card extends Component<ICard> {
-	protected appData: AppData;
 	protected titleElement: HTMLElement;
 	protected priceLabel: HTMLSpanElement;
 	protected imageElement: HTMLImageElement | null;
@@ -19,7 +17,6 @@ export class Card extends Component<ICard> {
 	constructor(
 		container: HTMLElement,
 		handlers?: ICardActions,
-		appData?: AppData,
 		isInBasket = false
 	) {
 		super(container);
@@ -29,7 +26,6 @@ export class Card extends Component<ICard> {
 		this.actionButton = container.querySelector('.card__button');
 		this.imageElement = container.querySelector('.card__image');
 		this.descriptionElement = container.querySelector('.card__text');
-		this.appData = appData;
 
 		if (isInBasket) {
 			this.indexElement = ensureElement<HTMLElement>(
@@ -59,13 +55,7 @@ export class Card extends Component<ICard> {
 		}
 	}
 
-	updateActionLabel(card: ICard): string {
-		if (card.price !== null) {
-			return this.appData.isInBasket(card) ? 'Уже в корзине' : 'В корзину';
-		}
-		return 'Бесценно';
-	}
-
+	
 	set id(id: string) {
 		this.container.dataset.id = id;
 	}
@@ -83,18 +73,13 @@ export class Card extends Component<ICard> {
 			const formattedPrice =
 				price <= 4 ? price.toString() : formatNumber(price);
 			this.updateText(this.priceLabel, `${formattedPrice} синапсов`);
-			this.setElementState(this.actionButton, this.isInBasket());
 		} else {
 			this.updateText(this.priceLabel, 'Бесценно');
 			this.setElementState(this.actionButton, true);
 		}
 	}
 
-	isInBasket(): boolean {
-		return this.appData.basket.some(
-			(item) => item.id === this.container.dataset.id
-		);
-	}
+
 
 	set image(src: string) {
 		if (this.imageElement) {

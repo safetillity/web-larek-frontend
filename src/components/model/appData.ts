@@ -42,6 +42,17 @@ export class AppData {
 		this.notify('preview:updated', card);
 	}
 
+	updateButtonStatus(item: ICard) {
+		if (item.price === null) {
+			return 'Не для продажи';
+		}
+		if (!this.isInBasket(item)) {
+			return 'Добавить в корзину';
+		} else {
+			return 'Убрать из корзины';
+		}
+	}
+
 	toggleBasketItem(card: ICard) {
 		this.isInBasket(card)
 			? this.removeFromBasket(card)
