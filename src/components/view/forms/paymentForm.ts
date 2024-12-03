@@ -49,10 +49,12 @@ export class PaymentForm extends BaseForm<TOrderPayment> {
 
 	updatePaymentButtons(payment: string) {
 		this.clearPaymentHighlight();
+		if (!payment) return;
 		const paymentButton =
 			payment === 'cash' ? this.cashButton : this.onlineButton;
 		paymentButton.classList.add('button_alt-active');
 	}
+
 	clearPaymentHighlight() {
 		[this.cashButton, this.onlineButton].forEach((btn) =>
 			btn.classList.remove('button_alt-active')

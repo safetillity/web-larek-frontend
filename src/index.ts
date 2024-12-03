@@ -23,28 +23,6 @@ const templates = {
 	modal: ensureElement<HTMLElement>('#modal-container'),
 };
 
-class OrderPresenter {
-	constructor(private appData: AppData, private paymentForm: PaymentForm) {
-		this.init();
-	}
-
-	init() {
-		this.appData.events.on('order:updated', this.renderPayment.bind(this));
-
-		this.appData.events.on(
-			'order:paymentChanged',
-			({ payment }: { payment: string }) => {
-				this.appData.updateOrderField('payment', payment);
-			}
-		);
-	}
-
-	renderPayment() {
-		const { payment } = this.appData.order;
-		this.paymentForm.updatePaymentButtons(payment);
-	}
-}
-
 const events = new EventEmitter();
 const api = new ApiModel(CDN_URL, API_URL);
 const appData = new AppData(events);
@@ -53,7 +31,6 @@ const page = new Page(document.body, events);
 const basket = new Basket(cloneTemplate(templates.basket), events);
 const paymentForm = new PaymentForm(cloneTemplate(templates.payment), events);
 const contactForm = new ContactForm(cloneTemplate(templates.contacts), events);
-const orderPresenter = new OrderPresenter(appData, paymentForm);
 const successWindow = new Success(cloneTemplate(templates.success), {
 	onClick: () => {
 		modal.close();
@@ -120,6 +97,15 @@ events.on('basket:changed', () => {
 	);
 });
 
+events.on('order:updated', () => {
+	const { payment } = appData.order;
+	paymentForm.updatePaymentButtons(payment);
+});
+
+events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
+	appData.updateOrderField('payment', payment);
+});
+
 events.on('order:open', () => {
 	appData.validateOrder();
 	paymentForm.updatePaymentButtons(appData.order.payment);
@@ -146,14 +132,6 @@ events.on(
 		appData.updateOrderField(field, value);
 	}
 );
-
-events.on('order:paymentChanged', ({ payment }: { payment: string }) => {
-	appData.updateOrderField('payment', payment);
-});
-
-events.on('order:updated', () => {
-	orderPresenter.renderPayment();
-});
 
 events.on('order:submit', () => {
 	modal.render({
